@@ -1,5 +1,5 @@
 {
-  "name": "TVC Storyboard Agent",
-  "description": "An AI-powered agent for generating TVC advertising storyboards from product images, scripts, and prompts.",
+  "name": "《李聪传》AI 短剧生产工作台",
+  "description": "把《李聪传》从书稿/素材库升级为可连载的 AI 短剧 IP 的生产与分发工作台",
   "requestFramePermissions": []
 }
