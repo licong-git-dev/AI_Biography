@@ -1,100 +1,95 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  useCharacterStore,
   useChapterStore,
+  useCharacterStore,
   useEpisodeStore,
   useShotStore,
+  useUIStore,
+  type CenterTab,
 } from '../stores';
 import { SEASON_NAME, SEASON_CORE_EMOTIONS } from '../data/episodes';
-import type { Priority } from '../types';
+import EpisodeList from '../features/episodes/EpisodeList';
+import ChapterList from '../features/chapters/ChapterList';
+import ChapterDetail from '../features/chapters/ChapterDetail';
+import ShotTable from '../features/shots/ShotTable';
 
-const PRIORITY_COLOR: Record<Priority, string> = {
-  S: 'bg-red-900/40 text-red-300 border-red-800/50',
-  A: 'bg-amber-900/40 text-amber-300 border-amber-800/50',
-  'A-': 'bg-amber-900/20 text-amber-400 border-amber-800/30',
-  B: 'bg-neutral-800 text-neutral-400 border-neutral-700',
-};
+const TABS: { id: CenterTab; label: string; hint: string }[] = [
+  { id: 'episodes', label: '集数', hint: '第一季主剧情集规划' },
+  { id: 'chapters', label: '章节', hint: '9 章原书稿' },
+  { id: 'shots', label: '镜头', hint: '镜头表 / 生产状态' },
+];
 
 const CenterPanel: React.FC = () => {
-  const episodes = useEpisodeStore((s) => s.episodes);
-  const activeEpisodeId = useEpisodeStore((s) => s.activeId);
-  const setActiveEpisode = useEpisodeStore((s) => s.setActive);
+  const centerTab = useUIStore((s) => s.centerTab);
+  const setCenterTab = useUIStore((s) => s.setCenterTab);
 
   const chapterCount = useChapterStore((s) => s.chapters.length);
   const characterCount = useCharacterStore((s) => s.characters.length);
+  const episodeCount = useEpisodeStore((s) => s.episodes.length);
   const shotCount = useShotStore((s) => s.shots.length);
 
+  const [chapterDetailId, setChapterDetailId] = useState<string | null>(null);
+
+  const activeTab = TABS.find((t) => t.id === centerTab) ?? TABS[0];
+
   return (
-    <div className="p-6">
-      <header className="mb-6">
-        <h1 className="text-xl font-semibold">{SEASON_NAME}</h1>
-        <p className="text-sm text-neutral-400 mt-1">
+    <div className="flex h-full flex-col">
+      <header className="shrink-0 border-b border-neutral-800 bg-neutral-950 px-6 pt-5 pb-3">
+        <h1 className="text-lg font-semibold text-neutral-100">{SEASON_NAME}</h1>
+        <p className="mt-1 text-xs text-neutral-500">
           核心情绪：{SEASON_CORE_EMOTIONS.join(' · ')}
         </p>
-      </header>
 
-      <div className="mb-6 grid grid-cols-4 gap-3">
-        <StatCard label="章节" value={chapterCount} unit="章" />
-        <StatCard label="角色" value={characterCount} unit="个" />
-        <StatCard label="集数" value={episodes.length} unit="集" />
-        <StatCard label="镜头" value={shotCount} unit="条" />
-      </div>
-
-      <section>
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-sm font-semibold text-neutral-200">
-            第一季 · 主剧情集规划
-          </h2>
-          <span className="text-xs text-neutral-500">
-            Phase 4 将加"拆集 / 编辑"操作
-          </span>
+        <div className="mt-4 grid grid-cols-4 gap-2">
+          <StatCard label="章节" value={chapterCount} unit="章" />
+          <StatCard label="角色" value={characterCount} unit="个" />
+          <StatCard label="集数" value={episodeCount} unit="集" />
+          <StatCard label="镜头" value={shotCount} unit="条" />
         </div>
 
-        <div className="space-y-2">
-          {episodes.map((ep) => {
-            const active = ep.id === activeEpisodeId;
+        <div className="mt-4 flex items-end gap-1 border-b border-neutral-800/60">
+          {TABS.map((t) => {
+            const active = t.id === centerTab;
             return (
               <button
-                key={ep.id}
-                onClick={() => setActiveEpisode(active ? null : ep.id)}
-                className={`w-full text-left rounded-lg border p-3 transition ${
+                key={t.id}
+                onClick={() => {
+                  setCenterTab(t.id);
+                  if (t.id !== 'chapters') setChapterDetailId(null);
+                }}
+                className={`relative px-3 py-2 text-sm transition ${
                   active
-                    ? 'border-neutral-600 bg-neutral-900'
-                    : 'border-neutral-800 bg-neutral-900/40 hover:border-neutral-700'
+                    ? 'text-neutral-100'
+                    : 'text-neutral-500 hover:text-neutral-300'
                 }`}
+                type="button"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-neutral-500">
-                        EP{String(ep.episodeNumber).padStart(2, '0')}
-                      </span>
-                      <span className="text-sm font-medium text-neutral-100">
-                        《{ep.title}》
-                      </span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded border ${PRIORITY_COLOR[ep.priority]}`}
-                      >
-                        {ep.priority}
-                      </span>
-                    </div>
-                    <div className="text-xs text-neutral-400 mb-1">
-                      {ep.mainConflict}
-                    </div>
-                    <div className="text-[11px] text-neutral-500">
-                      来源：第 {ep.sourceChapters.join('、')} 章 · {ep.targetDuration} ·{' '}
-                      {ep.platformSellingPoint}
-                    </div>
-                  </div>
-                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
-                    {ep.status}
-                  </span>
-                </div>
+                {t.label}
+                {active && (
+                  <span className="absolute inset-x-3 -bottom-px h-0.5 bg-neutral-100" />
+                )}
               </button>
             );
           })}
+          <span className="ml-2 pb-2 text-[11px] text-neutral-600">
+            {activeTab.hint}
+          </span>
         </div>
-      </section>
+      </header>
+
+      <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
+        {centerTab === 'episodes' && <EpisodeList />}
+        {centerTab === 'chapters' &&
+          (chapterDetailId ? (
+            <ChapterDetail
+              chapterId={chapterDetailId}
+              onBack={() => setChapterDetailId(null)}
+            />
+          ) : (
+            <ChapterList onSelect={setChapterDetailId} />
+          ))}
+        {centerTab === 'shots' && <ShotTable />}
+      </div>
     </div>
   );
 };
@@ -104,13 +99,13 @@ const StatCard: React.FC<{
   value: number;
   unit: string;
 }> = ({ label, value, unit }) => (
-  <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+  <div className="rounded border border-neutral-800 bg-neutral-900/40 px-3 py-2">
     <div className="text-[10px] uppercase tracking-wide text-neutral-500">
       {label}
     </div>
-    <div className="mt-1 flex items-baseline gap-1">
-      <span className="text-xl font-semibold text-neutral-100">{value}</span>
-      <span className="text-xs text-neutral-500">{unit}</span>
+    <div className="mt-0.5 flex items-baseline gap-1">
+      <span className="text-lg font-semibold text-neutral-100">{value}</span>
+      <span className="text-[11px] text-neutral-500">{unit}</span>
     </div>
   </div>
 );
