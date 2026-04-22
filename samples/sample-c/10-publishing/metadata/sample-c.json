@@ -1,0 +1,45 @@
+{
+  "sampleId": "sample-c",
+  "title": "遇见她以后",
+  "sourceChapters": [
+    "第八章_遇见她"
+  ],
+  "narrativeType": "情感篇/爱情线传播样片",
+  "targetDurationSeconds": 75,
+  "primaryPlatforms": [
+    "douyin",
+    "xiaohongshu",
+    "bilibili"
+  ],
+  "characterBibleVersion": "v1",
+  "visualStyleVersion": "v1",
+  "shotlistFile": "Sample-C-Shotlist.md",
+  "shotlistVersion": "v1",
+  "promptPackFile": "Sample-C-Prompt-Pack.md",
+  "promptPackVersion": "v1",
+  "copyPackFile": "Sample-Copy-Pack.md#Sample C",
+  "exportTargets": [
+    "main-9x16",
+    "hook-15s",
+    "trailer-30s",
+    "no-subtitles",
+    "burned-subtitles"
+  ],
+  "keyDynamicShots": [
+    "C-01",
+    "C-02",
+    "C-05",
+    "C-08"
+  ],
+  "publishStatus": "planning_complete",
+  "productionStatus": {
+    "keyframes": "pending",
+    "videoClips": "pending",
+    "audio": "pending",
+    "subtitles": "pending",
+    "editing": "pending",
+    "exports": "pending",
+    "publishingPack": "pending"
+  },
+  "notes": "传播性最高的情感样片，适合在 Sample A 后优先执行验证转化。"
+}

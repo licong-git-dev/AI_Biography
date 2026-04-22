@@ -1,0 +1,32 @@
+{
+  "id": "sample-b",
+  "title": "那个不说话的男孩",
+  "composition": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "durationInFrames": 1512
+  },
+  "stylePreset": "youth-grey-blue-film",
+  "audio": {
+    "narration": "samples/sample-b/06-audio/narration/b-narration-main-v1.wav",
+    "music": "samples/sample-b/06-audio/music/b-bgm-main-v1.wav",
+    "sfx": [
+      "samples/sample-b/06-audio/sfx/classroom-01.wav",
+      "samples/sample-b/06-audio/sfx/motorbike-01.wav",
+      "samples/sample-b/06-audio/sfx/night-room-01.wav"
+    ]
+  },
+  "shots": [
+    {"shotId": "B-01", "type": "video", "src": "samples/sample-b/05-video-clips/approved/b-01-clip-approved.mp4", "startFrame": 0, "durationInFrames": 96, "captionId": "cap-01"},
+    {"shotId": "B-02", "type": "image", "src": "samples/sample-b/04-keyframes/approved/b-02-keyframe-approved.png", "motion": "slow-push-in", "startFrame": 96, "durationInFrames": 168, "captionId": "cap-02"},
+    {"shotId": "B-03", "type": "video", "src": "samples/sample-b/05-video-clips/approved/b-03-clip-approved.mp4", "startFrame": 264, "durationInFrames": 144, "captionId": "cap-03"},
+    {"shotId": "B-04", "type": "image", "src": "samples/sample-b/04-keyframes/approved/b-04-keyframe-approved.png", "motion": "subtle-drift", "startFrame": 408, "durationInFrames": 168, "captionId": "cap-04"},
+    {"shotId": "B-05", "type": "video", "src": "samples/sample-b/05-video-clips/approved/b-05-clip-approved.mp4", "startFrame": 576, "durationInFrames": 192, "captionId": "cap-05"},
+    {"shotId": "B-06", "type": "image-montage", "src": "samples/sample-b/04-keyframes/contact-sheet/b-06-montage-set.json", "motion": "fast-montage", "startFrame": 768, "durationInFrames": 192, "captionId": "cap-06"},
+    {"shotId": "B-07", "type": "video", "src": "samples/sample-b/05-video-clips/approved/b-07-clip-approved.mp4", "startFrame": 960, "durationInFrames": 168, "captionId": "cap-07"},
+    {"shotId": "B-08", "type": "video", "src": "samples/sample-b/05-video-clips/approved/b-08-clip-approved.mp4", "startFrame": 1128, "durationInFrames": 192, "captionId": "cap-08"},
+    {"shotId": "B-09", "type": "end-card", "text": "后来我才知道，少年时最难的，不是吃苦，而是不知道该向谁开口。", "startFrame": 1320, "durationInFrames": 192, "captionId": "cap-09"}
+  ],
+  "captionsFile": "sample-b-captions.json"
+}

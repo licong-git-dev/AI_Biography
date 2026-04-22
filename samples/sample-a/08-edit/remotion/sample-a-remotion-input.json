@@ -1,0 +1,100 @@
+{
+  "id": "sample-a",
+  "title": "西山的灯一直亮着",
+  "composition": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "durationInFrames": 1632
+  },
+  "stylePreset": "warm-nostalgic-film",
+  "audio": {
+    "narration": "samples/sample-a/06-audio/narration/a-narration-main-v1.wav",
+    "music": "samples/sample-a/06-audio/music/a-bgm-main-v1.wav",
+    "sfx": [
+      "samples/sample-a/06-audio/sfx/birds-01.wav",
+      "samples/sample-a/06-audio/sfx/breakfast-stall-01.wav",
+      "samples/sample-a/06-audio/sfx/bus-01.wav"
+    ]
+  },
+  "shots": [
+    {
+      "shotId": "A-01",
+      "type": "video",
+      "src": "samples/sample-a/05-video-clips/approved/a-01-clip-approved.mp4",
+      "startFrame": 0,
+      "durationInFrames": 120,
+      "captionId": "cap-01"
+    },
+    {
+      "shotId": "A-02",
+      "type": "image",
+      "src": "samples/sample-a/04-keyframes/approved/a-02-keyframe-approved.png",
+      "motion": "slow-push-in",
+      "startFrame": 120,
+      "durationInFrames": 144,
+      "captionId": "cap-02"
+    },
+    {
+      "shotId": "A-03",
+      "type": "image-montage",
+      "src": "samples/sample-a/04-keyframes/contact-sheet/a-03-montage-set.json",
+      "motion": "montage",
+      "startFrame": 264,
+      "durationInFrames": 192,
+      "captionId": "cap-03"
+    },
+    {
+      "shotId": "A-04",
+      "type": "image",
+      "src": "samples/sample-a/04-keyframes/approved/a-04-keyframe-approved.png",
+      "motion": "subtle-drift",
+      "startFrame": 456,
+      "durationInFrames": 168,
+      "captionId": "cap-04"
+    },
+    {
+      "shotId": "A-05",
+      "type": "video",
+      "src": "samples/sample-a/05-video-clips/approved/a-05-clip-approved.mp4",
+      "startFrame": 624,
+      "durationInFrames": 192,
+      "captionId": "cap-05"
+    },
+    {
+      "shotId": "A-06",
+      "type": "video",
+      "src": "samples/sample-a/05-video-clips/approved/a-06-clip-approved.mp4",
+      "startFrame": 816,
+      "durationInFrames": 144,
+      "captionId": "cap-06"
+    },
+    {
+      "shotId": "A-07",
+      "type": "image-montage",
+      "src": "samples/sample-a/04-keyframes/contact-sheet/a-07-bus-montage.json",
+      "motion": "bus-window-montage",
+      "startFrame": 960,
+      "durationInFrames": 240,
+      "captionId": "cap-07"
+    },
+    {
+      "shotId": "A-08",
+      "type": "video-image-mix",
+      "src": "samples/sample-a/05-video-clips/approved/a-08-clip-approved.mp4",
+      "fallbackImage": "samples/sample-a/04-keyframes/approved/a-08-keyframe-approved.png",
+      "startFrame": 1200,
+      "durationInFrames": 240,
+      "captionId": "cap-08"
+    },
+    {
+      "shotId": "A-09",
+      "type": "end-card",
+      "text": "我后来才明白，一个孩子最先学会的，往往不是长大，而是忍住想哭。",
+      "startFrame": 1440,
+      "durationInFrames": 192,
+      "captionId": "cap-09"
+    }
+  ],
+  "captionsFile": "sample-a-captions.json"
+}

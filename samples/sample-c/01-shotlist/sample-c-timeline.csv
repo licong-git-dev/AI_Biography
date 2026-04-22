@@ -1,0 +1,9 @@
+shot_id,start_s,end_s,duration_s,asset_type,asset_name,audio_type,subtitle_text,transition
+C-01,0,5,5,video,c-01-clip-approved.mp4,narration,"有些人出现以后，你才知道自己原来也值得被爱。",fade-in
+C-02,5,12,7,video,c-02-clip-approved.mp4,music_narration,"最开始见她的时候，我没觉得她会成为我的命运。",soft-dissolve
+C-03,12,18,6,image,c-03-keyframe-approved.png,narration_sfx,"后来她来找我学主持，第一次走进我那间毛坯房。",cut
+C-04,18,26,8,image_montage,c-04-date-montage,narration_music,"我给她蒸了腊肠和汤包，笨拙得像在交一份人生答卷。",match-cut
+C-05,26,33,7,video,c-05-clip-approved.mp4,narration_dialogue,"我们一起骑车，从汉口到武昌。",soft-dissolve
+C-06,33,40,7,image,c-06-keyframe-approved.png,narration_sfx,"坐轮渡，吃小吃，聊那些谁都不轻易说出口的家庭往事。",cut
+C-07,40,48,8,image_montage,c-07-love-montage,narration_music,"她没有拯救我，她只是让我第一次觉得，日子可以被认真地过好。",soft-dissolve
+C-08,48,56,8,video,c-08-clip-approved.mp4,narration_music,"原来真正的爱情，是让一个人慢慢变亮。",fade-to-black

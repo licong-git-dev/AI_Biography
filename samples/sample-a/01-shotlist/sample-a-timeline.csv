@@ -1,0 +1,10 @@
+shot_id,start_s,end_s,duration_s,asset_type,asset_name,audio_type,subtitle_text,transition
+A-01,0,5,5,video,a-01-clip-approved.mp4,narration,"三岁那年，我第一次知道，家也会分成两个。",fade-in
+A-02,5,11,6,image,a-02-keyframe-approved.png,narration,"可我最先记住的，不是离开。",cut
+A-03,11,19,8,image_montage,a-03-montage-set,narration_sfx,"是西山脚下的清晨，是爷爷牵着我的手去吃热干面。",soft-dissolve
+A-04,19,26,7,image,a-04-keyframe-approved.png,narration_dialogue,"是奶奶拍着我的背，哼着我听不懂的小调。",soft-dissolve
+A-05,26,34,8,video,a-05-clip-approved.mp4,music_narration,"后来，父亲提着行李走出了那扇门。",cut
+A-06,34,40,6,video,a-06-clip-approved.mp4,narration,"我站在门口，伸出手，却不知道该追谁。",cut
+A-07,40,50,10,image_montage,a-07-bus-montage,narration_sfx,"从那以后，我开始在两个家之间来回。公交车开过乡村，也开进城市。",match-cut
+A-08,50,60,10,video_image_mix,a-08-farewell-set,narration_music,"奶奶把一包花生塞到我手里，站在村口一直挥手。",soft-dissolve
+A-09,60,68,8,title_card,a-09-end-card,narration_music,"我后来才明白，一个孩子最先学会的，往往不是长大，而是忍住想哭。",fade-to-black

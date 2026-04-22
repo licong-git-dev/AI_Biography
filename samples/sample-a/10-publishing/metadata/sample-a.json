@@ -1,0 +1,46 @@
+{
+  "sampleId": "sample-a",
+  "title": "西山的灯一直亮着",
+  "sourceChapters": [
+    "第一章_西山脚下",
+    "第二章_两个家"
+  ],
+  "narrativeType": "童年篇/剧情版主样片",
+  "targetDurationSeconds": 90,
+  "primaryPlatforms": [
+    "douyin",
+    "wechat_channels",
+    "bilibili"
+  ],
+  "characterBibleVersion": "v1",
+  "visualStyleVersion": "v1",
+  "shotlistFile": "Sample-A-Shotlist.md",
+  "shotlistVersion": "v1",
+  "promptPackFile": "Sample-A-Prompt-Pack.md",
+  "promptPackVersion": "v1",
+  "copyPackFile": "Sample-Copy-Pack.md#Sample A",
+  "exportTargets": [
+    "main-9x16",
+    "hook-15s",
+    "trailer-30s",
+    "no-subtitles",
+    "burned-subtitles"
+  ],
+  "keyDynamicShots": [
+    "A-01",
+    "A-05",
+    "A-06",
+    "A-08"
+  ],
+  "publishStatus": "planning_complete",
+  "productionStatus": {
+    "keyframes": "pending",
+    "videoClips": "pending",
+    "audio": "pending",
+    "subtitles": "pending",
+    "editing": "pending",
+    "exports": "pending",
+    "publishingPack": "pending"
+  },
+  "notes": "优先建立 IP 气质与家庭底色；先做 Sample A 再复制方法到 C/B。"
+}

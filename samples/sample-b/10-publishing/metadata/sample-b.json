@@ -1,0 +1,47 @@
+{
+  "sampleId": "sample-b",
+  "title": "那个不说话的男孩",
+  "sourceChapters": [
+    "第三章_少年心事",
+    "第四章_转学记"
+  ],
+  "narrativeType": "少年篇/成长冲突样片",
+  "targetDurationSeconds": 75,
+  "primaryPlatforms": [
+    "douyin",
+    "bilibili",
+    "xiaohongshu"
+  ],
+  "characterBibleVersion": "v1",
+  "visualStyleVersion": "v1",
+  "shotlistFile": "Sample-B-Shotlist.md",
+  "shotlistVersion": "v1",
+  "promptPackFile": "Sample-B-Prompt-Pack.md",
+  "promptPackVersion": "v1",
+  "copyPackFile": "Sample-Copy-Pack.md#Sample B",
+  "exportTargets": [
+    "main-9x16",
+    "hook-15s",
+    "trailer-30s",
+    "no-subtitles",
+    "burned-subtitles"
+  ],
+  "keyDynamicShots": [
+    "B-01",
+    "B-03",
+    "B-05",
+    "B-07",
+    "B-08"
+  ],
+  "publishStatus": "planning_complete",
+  "productionStatus": {
+    "keyframes": "pending",
+    "videoClips": "pending",
+    "audio": "pending",
+    "subtitles": "pending",
+    "editing": "pending",
+    "exports": "pending",
+    "publishingPack": "pending"
+  },
+  "notes": "重点验证成长冲突和少年阶段代入感；建议在 Sample A、C 之后执行。"
+}

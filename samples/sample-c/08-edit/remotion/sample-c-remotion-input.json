@@ -1,0 +1,31 @@
+{
+  "id": "sample-c",
+  "title": "遇见她以后",
+  "composition": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "durationInFrames": 1344
+  },
+  "stylePreset": "warm-romantic-realism",
+  "audio": {
+    "narration": "samples/sample-c/06-audio/narration/c-narration-main-v1.wav",
+    "music": "samples/sample-c/06-audio/music/c-bgm-main-v1.wav",
+    "sfx": [
+      "samples/sample-c/06-audio/sfx/party-01.wav",
+      "samples/sample-c/06-audio/sfx/ferry-01.wav",
+      "samples/sample-c/06-audio/sfx/kitchen-01.wav"
+    ]
+  },
+  "shots": [
+    {"shotId": "C-01", "type": "video", "src": "samples/sample-c/05-video-clips/approved/c-01-clip-approved.mp4", "startFrame": 0, "durationInFrames": 120, "captionId": "cap-01"},
+    {"shotId": "C-02", "type": "video", "src": "samples/sample-c/05-video-clips/approved/c-02-clip-approved.mp4", "startFrame": 120, "durationInFrames": 168, "captionId": "cap-02"},
+    {"shotId": "C-03", "type": "image", "src": "samples/sample-c/04-keyframes/approved/c-03-keyframe-approved.png", "motion": "slow-push-in", "startFrame": 288, "durationInFrames": 144, "captionId": "cap-03"},
+    {"shotId": "C-04", "type": "image-montage", "src": "samples/sample-c/04-keyframes/contact-sheet/c-04-date-montage.json", "motion": "date-montage", "startFrame": 432, "durationInFrames": 192, "captionId": "cap-04"},
+    {"shotId": "C-05", "type": "video", "src": "samples/sample-c/05-video-clips/approved/c-05-clip-approved.mp4", "startFrame": 624, "durationInFrames": 168, "captionId": "cap-05"},
+    {"shotId": "C-06", "type": "image", "src": "samples/sample-c/04-keyframes/approved/c-06-keyframe-approved.png", "motion": "subtle-drift", "startFrame": 792, "durationInFrames": 168, "captionId": "cap-06"},
+    {"shotId": "C-07", "type": "image-montage", "src": "samples/sample-c/04-keyframes/contact-sheet/c-07-love-montage.json", "motion": "soft-romance-montage", "startFrame": 960, "durationInFrames": 192, "captionId": "cap-07"},
+    {"shotId": "C-08", "type": "video", "src": "samples/sample-c/05-video-clips/approved/c-08-clip-approved.mp4", "startFrame": 1152, "durationInFrames": 192, "captionId": "cap-08"}
+  ],
+  "captionsFile": "sample-c-captions.json"
+}

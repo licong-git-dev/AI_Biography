@@ -1,0 +1,5 @@
+{
+  "name": "TVC Storyboard Agent",
+  "description": "An AI-powered agent for generating TVC advertising storyboards from product images, scripts, and prompts.",
+  "requestFramePermissions": []
+}

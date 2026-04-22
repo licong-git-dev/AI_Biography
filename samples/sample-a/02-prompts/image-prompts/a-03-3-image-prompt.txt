@@ -1,0 +1,4 @@
+A lively early-2000s Chinese breakfast stall on a small-town street, steaming hot noodles, fried dough, bowls and chopsticks, elderly grandfather holding a little boy's hand, warm morning light filtering through sycamore trees, nostalgic realistic Chinese life, cinematic 35mm texture.
+
+NEGATIVE:
+avoid anime style, avoid western street food, avoid glossy commercial ad look, avoid text in image, avoid logo, avoid watermark

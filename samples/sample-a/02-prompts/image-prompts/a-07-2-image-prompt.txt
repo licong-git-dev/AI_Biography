@@ -1,0 +1,4 @@
+Inside an old Chinese bus, a child looking out the window as small-city streets pass by, apartment buildings and streetlights outside, face reflected faintly on the glass, lonely but quiet mood, nostalgic early-2000s China, realistic cinematic texture.
+
+NEGATIVE:
+avoid anime style, avoid cyberpunk city, avoid western city streets, avoid text in image, avoid logo, avoid watermark

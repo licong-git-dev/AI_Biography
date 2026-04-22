@@ -1,0 +1,10 @@
+shot_id,start_s,end_s,duration_s,asset_type,asset_name,audio_type,subtitle_text,transition
+B-01,0,4,4,video,b-01-clip-approved.mp4,narration,"小时候我不爱说话。",fade-in
+B-02,4,11,7,image,b-02-keyframe-approved.png,narration_sfx,"因为有些难过，说了也没人懂。",cut
+B-03,11,17,6,video,b-03-clip-approved.mp4,narration,"他们都觉得我叛逆。",soft-dissolve
+B-04,17,24,7,image,b-04-keyframe-approved.png,narration_sfx,"觉得我不听话，觉得我变坏了。",cut
+B-05,24,32,8,video,b-05-clip-approved.mp4,narration,"可我只是太想证明自己。",cut
+B-06,32,40,8,image_montage,b-06-montage-set,narration_music,"我看着别的同学坐进小汽车里，看着妈妈骑着旧摩托来接我。",match-cut
+B-07,40,47,7,video,b-07-clip-approved.mp4,narration_dialogue,"那一刻，我说了一句后来想起来都后悔的话。",soft-dissolve
+B-08,47,55,8,video,b-08-clip-approved.mp4,narration_music,"我不是不爱她，我只是太羡慕那些完整的家庭。",cut
+B-09,55,63,8,title_card,b-09-end-card,narration_music,"后来我才知道，少年时最难的，不是吃苦，而是不知道该向谁开口。",fade-to-black
