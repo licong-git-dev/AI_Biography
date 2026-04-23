@@ -8,6 +8,8 @@ interface CharacterStore {
   activeId: string | null;
 
   setActive: (id: string | null) => void;
+  add: (character: Character) => void;
+  remove: (id: string) => void;
   update: (id: string, patch: Partial<Character>) => void;
   setReferenceImage: (id: string, url: string) => void;
   resetCharacter: (id: string) => void;
@@ -22,6 +24,15 @@ export const useCharacterStore = create<CharacterStore>()(
       activeId: null,
 
       setActive: (id) => set({ activeId: id }),
+
+      add: (character) =>
+        set((state) => ({ characters: [...state.characters, character] })),
+
+      remove: (id) =>
+        set((state) => ({
+          characters: state.characters.filter((c) => c.id !== id),
+          activeId: state.activeId === id ? null : state.activeId,
+        })),
 
       update: (id, patch) =>
         set((state) => ({

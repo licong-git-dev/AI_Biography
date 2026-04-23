@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { Character } from '../../types';
+import type { AgeStage, Character, CharacterGroup } from '../../types';
 import { useCharacterStore } from '../../stores';
 
 interface Props {
@@ -8,8 +8,23 @@ interface Props {
   onClose: () => void;
 }
 
+const GROUPS: CharacterGroup[] = ['主角', '家人', '伴侣', '朋友'];
+const AGE_STAGES: AgeStage[] = [
+  '幼年',
+  '童年',
+  '少年',
+  '青春期',
+  '青年',
+  '中年',
+  '老年',
+  '全时期',
+];
+
 interface FormState {
   name: string;
+  group: CharacterGroup;
+  ageStage: AgeStage;
+  ageRange: string;
   positioning: string;
   appearance: string;
   vibe: string;
@@ -22,6 +37,9 @@ interface FormState {
 function toForm(c: Character): FormState {
   return {
     name: c.name,
+    group: c.group,
+    ageStage: c.ageStage,
+    ageRange: c.ageRange,
     positioning: c.positioning,
     appearance: c.appearance.join('\n'),
     vibe: c.vibe.join('、'),
@@ -44,6 +62,9 @@ function fromForm(f: FormState): Partial<Character> {
   const inherited = splitLines(f.inheritedTraits);
   return {
     name: f.name.trim(),
+    group: f.group,
+    ageStage: f.ageStage,
+    ageRange: f.ageRange.trim(),
     positioning: f.positioning.trim(),
     appearance: splitLines(f.appearance),
     vibe: splitTags(f.vibe),
@@ -112,6 +133,44 @@ const CharacterEditModal: React.FC<Props> = ({ characterId, open, onClose }) => 
               className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
             />
           </Field>
+
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="分组">
+              <select
+                value={form.group}
+                onChange={(e) => patch('group', e.target.value as CharacterGroup)}
+                className="w-full rounded border border-neutral-700 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100"
+              >
+                {GROUPS.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="年龄段">
+              <select
+                value={form.ageStage}
+                onChange={(e) => patch('ageStage', e.target.value as AgeStage)}
+                className="w-full rounded border border-neutral-700 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100"
+              >
+                {AGE_STAGES.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="年龄范围">
+              <input
+                type="text"
+                value={form.ageRange}
+                onChange={(e) => patch('ageRange', e.target.value)}
+                placeholder="如 20-25 岁"
+                className="w-full rounded border border-neutral-700 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+              />
+            </Field>
+          </div>
 
           <Field label="角色定位">
             <textarea
