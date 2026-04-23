@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   useShotStore,
   useEpisodeStore,
@@ -45,6 +45,7 @@ const ShotTable: React.FC = () => {
   // 批量关键帧
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchSummary, setBatchSummary] = useState<string | null>(null);
+  const batchAbortRef = useRef<AbortController | null>(null);
 
   // 详情 modal
   const [detailShotId, setDetailShotId] = useState<string | null>(null);
@@ -111,10 +112,16 @@ const ShotTable: React.FC = () => {
     if (!activeEpisode || filteredShots.length === 0) return;
     setBatchSummary(null);
     setBatchRunning(true);
+    const controller = new AbortController();
+    batchAbortRef.current = controller;
     try {
+      const ungen = filteredShots.filter(
+        (s) => s.genStatus === '未生成' || s.genStatus === '失败'
+      );
       const result = await generateKeyframesForShots({
-        shots: filteredShots,
+        shots: ungen,
         characters,
+        signal: controller.signal,
         onStart: (id) => setGenStatus(id, '生成中'),
         onSuccess: (id, url, prompt) => {
           setKeyframe(id, url);
@@ -122,9 +129,15 @@ const ShotTable: React.FC = () => {
         },
         onFailure: (id) => setGenStatus(id, '失败'),
       });
-      setBatchSummary(
-        `完成：${result.successCount} 成功 · ${result.failCount} 失败`
-      );
+      if (result.aborted) {
+        setBatchSummary(
+          `已中止：${result.successCount} 成功 · ${result.failCount} 失败 · 剩余未处理`
+        );
+      } else {
+        setBatchSummary(
+          `完成：${result.successCount} 成功 · ${result.failCount} 失败`
+        );
+      }
     } catch (e) {
       if (e instanceof ApiKeyMissingError) {
         openApiKey();
@@ -136,7 +149,12 @@ const ShotTable: React.FC = () => {
       }
     } finally {
       setBatchRunning(false);
+      batchAbortRef.current = null;
     }
+  };
+
+  const handleCancelBatch = () => {
+    batchAbortRef.current?.abort();
   };
 
   const ungenCount = filteredShots.filter(
@@ -161,21 +179,32 @@ const ShotTable: React.FC = () => {
           )}
         </div>
         {activeEpisode && filteredShots.length > 0 && (
-          <button
-            onClick={handleBatchKeyframes}
-            disabled={batchRunning || ungenCount === 0}
-            className="rounded border border-sky-800 bg-sky-900/30 px-2.5 py-1 text-[11px] font-medium text-sky-200 hover:border-sky-700 hover:bg-sky-900/50 disabled:cursor-not-allowed disabled:opacity-40"
-            type="button"
-            title={
-              ungenCount === 0
-                ? '全部已生成'
-                : `将为 ${ungenCount} 个未生成的镜头依次调 Nano Banana Pro`
-            }
-          >
-            {batchRunning
-              ? '批量生成中…'
-              : `生成本集全部关键帧（${ungenCount}）`}
-          </button>
+          <div className="flex items-center gap-2">
+            {batchRunning && (
+              <button
+                onClick={handleCancelBatch}
+                className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1 text-[11px] font-medium text-red-300 hover:border-red-700"
+                type="button"
+              >
+                中止
+              </button>
+            )}
+            <button
+              onClick={handleBatchKeyframes}
+              disabled={batchRunning || ungenCount === 0}
+              className="rounded border border-sky-800 bg-sky-900/30 px-2.5 py-1 text-[11px] font-medium text-sky-200 hover:border-sky-700 hover:bg-sky-900/50 disabled:cursor-not-allowed disabled:opacity-40"
+              type="button"
+              title={
+                ungenCount === 0
+                  ? '全部已生成'
+                  : `将为 ${ungenCount} 个未生成的镜头依次调 Nano Banana Pro`
+              }
+            >
+              {batchRunning
+                ? '批量生成中…'
+                : `生成本集全部关键帧（${ungenCount}）`}
+            </button>
+          </div>
         )}
       </div>
 

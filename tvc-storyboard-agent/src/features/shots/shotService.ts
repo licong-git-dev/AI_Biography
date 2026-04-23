@@ -94,9 +94,16 @@ export async function generateShotKeyframe(
   return { url, prompt };
 }
 
+export class BatchAbortError extends Error {
+  constructor() {
+    super('用户中止了批量生成。');
+    this.name = 'BatchAbortError';
+  }
+}
+
 /**
- * 顺序生成本集全部镜头关键帧。onProgress 在每个 shot 完成时触发。
- * 返回成功生成的 shotId 数量和遇到的错误列表。
+ * 顺序生成本集全部镜头关键帧。支持 AbortSignal 中止（只在每个 shot 边界生效，
+ * 不会撕断正在进行的单帧请求）。
  */
 export async function generateKeyframesForShots(params: {
   shots: Shot[];
@@ -104,12 +111,16 @@ export async function generateKeyframesForShots(params: {
   onStart: (shotId: string) => void;
   onSuccess: (shotId: string, url: string, prompt: string) => void;
   onFailure: (shotId: string, error: string) => void;
-}): Promise<{ successCount: number; failCount: number }> {
-  const { shots, characters, onStart, onSuccess, onFailure } = params;
+  signal?: AbortSignal;
+}): Promise<{ successCount: number; failCount: number; aborted: boolean }> {
+  const { shots, characters, onStart, onSuccess, onFailure, signal } = params;
   let successCount = 0;
   let failCount = 0;
 
   for (const shot of shots) {
+    if (signal?.aborted) {
+      return { successCount, failCount, aborted: true };
+    }
     onStart(shot.id);
     try {
       const { url, prompt } = await generateShotKeyframe(shot, characters);
@@ -122,5 +133,5 @@ export async function generateKeyframesForShots(params: {
     }
   }
 
-  return { successCount, failCount };
+  return { successCount, failCount, aborted: false };
 }

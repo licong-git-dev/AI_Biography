@@ -10,6 +10,7 @@ import {
 import type { ChatMessage } from './chatService';
 import { streamChatReply } from './chatService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import Spinner from '../../components/Spinner';
 
 const ChatPanel: React.FC = () => {
   const messages = useChatStore((s) => s.messages);
@@ -214,9 +215,10 @@ const ChatPanel: React.FC = () => {
           <button
             onClick={handleSend}
             disabled={streaming || !input.trim()}
-            className="rounded bg-sky-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
             type="button"
           >
+            {streaming && <Spinner size={11} />}
             {streaming ? '生成中' : '发送'}
           </button>
         </div>

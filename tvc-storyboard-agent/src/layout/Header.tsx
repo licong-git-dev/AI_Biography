@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUIStore } from '../stores';
+import StorageIndicator from '../components/StorageIndicator';
 
 const Header: React.FC = () => {
   const apiKeyPresent = useUIStore((s) => s.apiKeyPresent);
@@ -11,23 +12,24 @@ const Header: React.FC = () => {
         <span className="text-sm font-semibold text-neutral-100">
           《李聪传》AI 短剧生产工作台
         </span>
-        <span className="text-[10px] text-neutral-600">v0.1 · Phase 2</span>
+        <span className="text-[10px] text-neutral-600">v0.1 · Phase 7</span>
       </div>
 
-      <button
-        onClick={openApiKey}
-        className="flex items-center gap-1.5 rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-300 hover:border-neutral-700 hover:text-neutral-100"
-        type="button"
-      >
-        <span
-          className={`inline-block h-1.5 w-1.5 rounded-full ${
-            apiKeyPresent ? 'bg-emerald-500' : 'bg-amber-500'
-          }`}
-        />
-        <span>
-          {apiKeyPresent ? 'API Key 已配置' : '配置 API Key'}
-        </span>
-      </button>
+      <div className="flex items-center gap-2">
+        <StorageIndicator />
+        <button
+          onClick={openApiKey}
+          className="flex items-center gap-1.5 rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-300 hover:border-neutral-700 hover:text-neutral-100"
+          type="button"
+        >
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${
+              apiKeyPresent ? 'bg-emerald-500' : 'bg-amber-500'
+            }`}
+          />
+          <span>{apiKeyPresent ? 'API Key 已配置' : '配置 API Key'}</span>
+        </button>
+      </div>
     </header>
   );
 };
