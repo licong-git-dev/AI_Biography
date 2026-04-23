@@ -83,31 +83,42 @@ AI_Biography/
 
 ## 🚀 前端工作台（tvc-storyboard-agent/）
 
-> **状态**：`main` 分支是最早从 AI Studio 下载的 TVC 广告模板（与 Product Spec 严重错配）。
-> `feature/rewrite` 分支正在按 Product Spec 重写为《李聪传》工作台。
-> 当前进度：**Phase 0（骨架）· Phase 1（数据层）· Phase 2（三栏 + tab 导航）** 已完成。
+**状态**：按 [Product-Spec.md](Product-Spec.md) 重写的《李聪传》工作台已全部功能落地。整条 AI 生产链打通：
 
-技术栈：Vite 6 + React 19 + TypeScript + Zustand + `@google/genai`（Nano Banana Pro）。
+```
+章节 → AI 拆集 → 短剧集 → AI 镜头表 → 关键帧 → 图生视频 → 配音 → 4 平台发布文案
+```
+
+技术栈：Vite 6 + React 19 + TypeScript + Zustand v5 + `@google/genai` 1.34（Gemini 3 Pro / Nano Banana Pro / Veo 3 / Gemini TTS）。
 
 本地运行：
 
 ```bash
-git checkout feature/rewrite          # 查看重写进度
 cd tvc-storyboard-agent
 cp .env.example .env.local            # 填 GEMINI_API_KEY
 npm install
 npm run dev                           # http://localhost:3000
 ```
 
-详见 [tvc-storyboard-agent/README.md](tvc-storyboard-agent/README.md)。
+完整端到端流程和架构见 [tvc-storyboard-agent/README.md](tvc-storyboard-agent/README.md)。
+逐 Phase 的重写记录见 [Product-Spec-CHANGELOG.md](Product-Spec-CHANGELOG.md) v2.0 条目。
 
-### 接下来的 Phase
+### 功能矩阵
 
-- **Phase 3** 角色卡编辑 + Nano Banana Pro 一致性参考图
-- **Phase 4** 章节 → 集数拆集 AI + 镜头表自动生成
-- **Phase 5** 关键帧批量生成（带角色参考图）
-- **Phase 6** AI 系统提示词 + 对话面板
-- **Phase 7** 打磨 / localStorage 持久化 / 错误态
+| Spec 能力 | 实现位置 | 状态 |
+|----------|---------|------|
+| 角色一致性（6 视图参考图） | `features/characters/characterService.ts` | ✅ |
+| 章节 → 集数 AI 拆集 | `features/chapters/chapterService.ts` | ✅ |
+| 集数 → 镜头表 AI 生成 | `features/episodes/episodeService.ts` | ✅ |
+| 关键帧 9:16 生成（单/批量/中止） | `features/shots/shotService.ts` | ✅ |
+| 图生视频（Veo 3） | `features/video/videoService.ts` | ✅ |
+| 旁白 / 对白配音（Gemini TTS） | `features/audio/voiceService.ts` | ✅ |
+| 字幕转写（SRT） | `features/audio/voiceService.ts` | ✅ |
+| 多平台发布文案 | `features/publishing/publishingService.ts` | ✅ |
+| 上下文感知对话 | `features/chat/chatService.ts` | ✅ |
+| 16:9 / 1:1 版本切换 | — | ❌ 未做 |
+| 封面图生成 | — | ❌ 未做（只有封面文案） |
+| 批量视频 / 批量配音 | — | ❌ 未做（单镜头级已有） |
 
 ---
 
