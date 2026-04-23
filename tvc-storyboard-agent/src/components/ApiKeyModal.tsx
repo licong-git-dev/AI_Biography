@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getApiKey, setApiKey } from '../services/apiKey';
 import { useUIStore } from '../stores';
+import { useEscapeKey } from './useEscapeKey';
 
 const ApiKeyModal: React.FC = () => {
   const open = useUIStore((s) => s.apiKeyModalOpen);
@@ -16,6 +17,8 @@ const ApiKeyModal: React.FC = () => {
       setShowValue(false);
     }
   }, [open]);
+
+  useEscapeKey(open, close);
 
   if (!open) return null;
 

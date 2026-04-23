@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { Episode, EpisodeFormat, EpisodeStatus, Priority } from '../../types';
 import { useEpisodeStore } from '../../stores';
+import { useEscapeKey } from '../../components/useEscapeKey';
 
 interface Props {
   episodeId: string | null;
@@ -76,6 +77,8 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
   useEffect(() => {
     if (open && episode) setForm(toForm(episode));
   }, [open, episode]);
+
+  useEscapeKey(open, onClose);
 
   if (!open || !episode || !form) return null;
 

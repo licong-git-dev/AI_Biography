@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import type { Shot } from '../../types';
+import { Pencil } from 'lucide-react';
 import { useCharacterStore, useShotStore, useUIStore } from '../../stores';
 import { generateShotKeyframe } from './shotService';
 import { generateShotVideo } from '../video/videoService';
 import { generateSpeech, extractSpeechText } from '../audio/voiceService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import Spinner from '../../components/Spinner';
+import { useEscapeKey } from '../../components/useEscapeKey';
+import ShotEditModal from './ShotEditModal';
 
 interface Props {
   shotId: string | null;
@@ -36,6 +38,10 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
   const [generatingVoice, setGeneratingVoice] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [speaker, setSpeaker] = useState('Kore');
+  const [editOpen, setEditOpen] = useState(false);
+
+  // 只在内层 ShotEditModal 未开时响应 Esc，避免同时关两层
+  useEscapeKey(Boolean(shotId) && Boolean(shot) && !editOpen, onClose);
 
   if (!shotId || !shot) return null;
 
@@ -129,13 +135,23 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-300"
-            type="button"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditOpen(true)}
+              className="flex items-center gap-1 rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-300 hover:border-neutral-700 hover:text-neutral-100"
+              type="button"
+              title="编辑镜头信息"
+            >
+              <Pencil size={11} /> 编辑
+            </button>
+            <button
+              onClick={onClose}
+              className="text-neutral-500 hover:text-neutral-300"
+              type="button"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-3 text-[11px]">
@@ -302,6 +318,12 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
           </details>
         )}
       </div>
+
+      <ShotEditModal
+        shotId={editOpen ? shot.id : null}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
     </div>
   );
 };

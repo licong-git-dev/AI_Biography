@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useCharacterStore, useChapterStore } from '../stores';
+import { useCharacterStore, useChapterStore, useShotStore } from '../stores';
 import type { Character, CharacterGroup } from '../types';
 import CharacterEditModal from '../features/characters/CharacterEditModal';
 
@@ -29,6 +29,8 @@ const LeftPanel: React.FC = () => {
   const setActiveCharacter = useCharacterStore((s) => s.setActive);
   const addCharacter = useCharacterStore((s) => s.add);
   const removeCharacter = useCharacterStore((s) => s.remove);
+  const shots = useShotStore((s) => s.shots);
+  const updateShot = useShotStore((s) => s.update);
 
   const chapterCount = useChapterStore((s) => s.chapters.length);
   const chaptersLoading = useChapterStore((s) => s.loading);
@@ -44,8 +46,23 @@ const LeftPanel: React.FC = () => {
   };
 
   const handleRemove = (id: string, name: string) => {
-    if (!confirm(`删除角色「${name}」？\n该角色的参考图和编辑内容都会丢失。`)) {
+    const referencingShots = shots.filter((s) => s.characters.includes(id));
+    const extraWarn =
+      referencingShots.length > 0
+        ? `\n\n该角色在 ${referencingShots.length} 个镜头里有出场引用。删除后这些镜头的角色列表会自动清理。`
+        : '';
+    if (
+      !confirm(
+        `删除角色「${name}」？\n该角色的参考图和编辑内容都会丢失。${extraWarn}`
+      )
+    ) {
       return;
+    }
+    // 先把所有引用该角色的镜头清理一下
+    for (const shot of referencingShots) {
+      updateShot(shot.id, {
+        characters: shot.characters.filter((cid) => cid !== id),
+      });
     }
     removeCharacter(id);
   };

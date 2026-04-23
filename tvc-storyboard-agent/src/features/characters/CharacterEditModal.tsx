@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { AgeStage, Character, CharacterGroup } from '../../types';
 import { useCharacterStore } from '../../stores';
+import { useEscapeKey } from '../../components/useEscapeKey';
 
 interface Props {
   characterId: string | null;
@@ -86,6 +87,8 @@ const CharacterEditModal: React.FC<Props> = ({ characterId, open, onClose }) => 
   useEffect(() => {
     if (open && character) setForm(toForm(character));
   }, [open, character]);
+
+  useEscapeKey(open, onClose);
 
   if (!open || !character || !form) return null;
 
