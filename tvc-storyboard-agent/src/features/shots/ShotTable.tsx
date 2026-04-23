@@ -50,11 +50,19 @@ const ShotTable: React.FC = () => {
   // 批量关键帧
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchSummary, setBatchSummary] = useState<string | null>(null);
+  const [batchProgress, setBatchProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
   const batchAbortRef = useRef<AbortController | null>(null);
 
   // 批量配音
   const [voiceRunning, setVoiceRunning] = useState(false);
   const [voiceSummary, setVoiceSummary] = useState<string | null>(null);
+  const [voiceProgress, setVoiceProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
   const [voiceSpeaker, setVoiceSpeaker] = useState('Kore');
   const voiceAbortRef = useRef<AbortController | null>(null);
 
@@ -129,6 +137,8 @@ const ShotTable: React.FC = () => {
       const ungen = filteredShots.filter(
         (s) => s.genStatus === '未生成' || s.genStatus === '失败'
       );
+      setBatchProgress({ done: 0, total: ungen.length });
+      let done = 0;
       const result = await generateKeyframesForShots({
         shots: ungen,
         characters,
@@ -137,8 +147,14 @@ const ShotTable: React.FC = () => {
         onSuccess: (id, url, prompt) => {
           setKeyframe(id, url);
           setPrompt(id, prompt);
+          done += 1;
+          setBatchProgress({ done, total: ungen.length });
         },
-        onFailure: (id) => setGenStatus(id, '失败'),
+        onFailure: (id) => {
+          setGenStatus(id, '失败');
+          done += 1;
+          setBatchProgress({ done, total: ungen.length });
+        },
       });
       if (result.aborted) {
         setBatchSummary(
@@ -160,6 +176,7 @@ const ShotTable: React.FC = () => {
       }
     } finally {
       setBatchRunning(false);
+      setBatchProgress(null);
       batchAbortRef.current = null;
     }
   };
@@ -186,13 +203,23 @@ const ShotTable: React.FC = () => {
         setVoiceSummary('没有可配音的镜头（要么已配好，要么没有旁白/对白）');
         return;
       }
+      setVoiceProgress({ done: 0, total: targets.length });
+      let done = 0;
       const result = await generateVoiceForShots({
         shots: targets,
         speaker: voiceSpeaker,
         signal: controller.signal,
         onStart: (id) => setVoiceGenStatus(id, '生成中'),
-        onSuccess: (id, url, speaker) => setVoice(id, url, speaker),
-        onFailure: (id) => setVoiceGenStatus(id, '失败'),
+        onSuccess: (id, url, speaker) => {
+          setVoice(id, url, speaker);
+          done += 1;
+          setVoiceProgress({ done, total: targets.length });
+        },
+        onFailure: (id) => {
+          setVoiceGenStatus(id, '失败');
+          done += 1;
+          setVoiceProgress({ done, total: targets.length });
+        },
         onSkip: () => {
           /* 不改变状态，只计数 */
         },
@@ -217,6 +244,7 @@ const ShotTable: React.FC = () => {
       }
     } finally {
       setVoiceRunning(false);
+      setVoiceProgress(null);
       voiceAbortRef.current = null;
     }
   };
@@ -276,9 +304,11 @@ const ShotTable: React.FC = () => {
                   : `将为 ${ungenCount} 个未生成的镜头依次调 Nano Banana Pro`
               }
             >
-              {batchRunning
-                ? '批量生成中…'
-                : `批量关键帧（${ungenCount}）`}
+              {batchRunning && batchProgress
+                ? `批量关键帧 ${batchProgress.done}/${batchProgress.total}…`
+                : batchRunning
+                  ? '批量生成中…'
+                  : `批量关键帧（${ungenCount}）`}
             </button>
 
             <select
@@ -314,9 +344,11 @@ const ShotTable: React.FC = () => {
                   : `将为 ${voiceTargetCount} 个带旁白/对白且未配音的镜头依次调 Gemini TTS`
               }
             >
-              {voiceRunning
-                ? '配音中…'
-                : `批量配音（${voiceTargetCount}）`}
+              {voiceRunning && voiceProgress
+                ? `批量配音 ${voiceProgress.done}/${voiceProgress.total}…`
+                : voiceRunning
+                  ? '配音中…'
+                  : `批量配音（${voiceTargetCount}）`}
             </button>
           </div>
         )}
