@@ -19,3 +19,5 @@ export type {
   VideoGenStatus,
   VoiceGenStatus,
 } from './shot';
+export type { Platform, PlatformCopy, PublishingPack } from './publishing';
+export { PLATFORMS } from './publishing';

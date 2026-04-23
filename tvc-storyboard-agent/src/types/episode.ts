@@ -8,6 +8,8 @@ export type EpisodeStatus = '规划中' | '生产中' | '待审' | '已完成';
 
 export type Priority = 'S' | 'A' | 'A-' | 'B';
 
+import type { PublishingPack } from './publishing';
+
 export interface Episode {
   id: string;
   seasonNumber: number;
@@ -25,4 +27,5 @@ export interface Episode {
   hook?: string;
   climax?: string;
   suspense?: string;
+  publishingPack?: PublishingPack;
 }

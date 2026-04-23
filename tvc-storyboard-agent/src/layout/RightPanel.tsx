@@ -7,6 +7,7 @@ import {
 import CharacterReferencePanel from '../features/characters/CharacterReferencePanel';
 import CharacterEditModal from '../features/characters/CharacterEditModal';
 import ChatPanel from '../features/chat/ChatPanel';
+import PublishingPanel from '../features/publishing/PublishingPanel';
 
 type RightTab = 'context' | 'chat';
 
@@ -123,13 +124,21 @@ const RightPanel: React.FC = () => {
                           </span>{' '}
                           {s.shotSize} · {s.duration}s — {s.description}
                           {s.keyframeUrl && (
-                            <span className="ml-1 text-emerald-400">✓</span>
+                            <span className="ml-1 text-emerald-400" title="关键帧">✓</span>
+                          )}
+                          {s.videoUrl && (
+                            <span className="ml-0.5 text-violet-400" title="视频">▶</span>
+                          )}
+                          {s.voiceUrl && (
+                            <span className="ml-0.5 text-amber-400" title="配音">♪</span>
                           )}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+
+                <PublishingPanel episode={activeEpisode} />
               </div>
             ) : (
               <div className="space-y-4">
