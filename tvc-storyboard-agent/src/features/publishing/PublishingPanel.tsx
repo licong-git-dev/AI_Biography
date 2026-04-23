@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
+import { Check, Circle } from 'lucide-react';
 import type { Episode, Platform } from '../../types';
 import { PLATFORMS } from '../../types';
-import { useEpisodeStore, useShotStore, useUIStore } from '../../stores';
+import {
+  useCharacterStore,
+  useEpisodeStore,
+  useShotStore,
+  useUIStore,
+} from '../../stores';
 import { generatePublishingPack } from './publishingService';
+import { exportEpisodeZip, downloadBlob } from './exportService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import Spinner from '../../components/Spinner';
 
@@ -14,8 +21,10 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
   const update = useEpisodeStore((s) => s.update);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const shots = useShotStore((s) => s.byEpisode(episode.id));
+  const characters = useCharacterStore((s) => s.characters);
 
   const [generating, setGenerating] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activePlatform, setActivePlatform] = useState<Platform>('抖音');
 
@@ -47,6 +56,27 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
       // 静默失败
     }
   };
+
+  const handleExport = async () => {
+    setError(null);
+    setExporting(true);
+    try {
+      const blob = await exportEpisodeZip({ episode, shots, characters });
+      const filename = `EP${String(episode.episodeNumber).padStart(2, '0')}-${episode.title.replace(/[\\/:*?"<>|]/g, '_')}.zip`;
+      downloadBlob(blob, filename);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const hasAnyAsset =
+    shots.length > 0 &&
+    (shots.some((s) => s.keyframeUrl) ||
+      shots.some((s) => s.videoUrl) ||
+      shots.some((s) => s.voiceUrl) ||
+      !!episode.publishingPack);
 
   // 合规检查清单
   const checklist = [
@@ -90,15 +120,13 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
             key={i}
             className="flex items-center gap-2 text-[11px]"
           >
-            <span
-              className={`inline-block h-3 w-3 rounded-full text-center text-[9px] leading-3 ${
-                c.pass
-                  ? 'bg-emerald-800 text-emerald-100'
-                  : 'bg-neutral-800 text-neutral-500'
-              }`}
-            >
-              {c.pass ? '✓' : '·'}
-            </span>
+            {c.pass ? (
+              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-800 text-emerald-100">
+                <Check size={9} strokeWidth={3} />
+              </span>
+            ) : (
+              <Circle size={14} className="text-neutral-600" />
+            )}
             <span
               className={c.pass ? 'text-neutral-300' : 'text-neutral-500'}
             >
@@ -195,7 +223,22 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
         </div>
       )}
 
-      <div className="mt-3 flex justify-end">
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <button
+          onClick={handleExport}
+          disabled={exporting || !hasAnyAsset}
+          className="flex items-center gap-1.5 rounded border border-neutral-700 px-2.5 py-1 text-[11px] font-medium text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800/50 disabled:cursor-not-allowed disabled:opacity-40"
+          type="button"
+          title={
+            hasAnyAsset
+              ? '打包镜头表 MD / CSV / 关键帧 / 视频 / 配音 / 发布包为 zip'
+              : '还没生成任何资产'
+          }
+        >
+          {exporting && <Spinner size={11} />}
+          {exporting ? '打包中…' : '导出本集 zip'}
+        </button>
+
         <button
           onClick={handleGenerate}
           disabled={generating}

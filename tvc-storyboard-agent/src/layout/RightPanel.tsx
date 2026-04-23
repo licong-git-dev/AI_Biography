@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Image as ImageIcon, Film, Volume2 } from 'lucide-react';
 import {
   useCharacterStore,
   useEpisodeStore,
@@ -123,15 +124,29 @@ const RightPanel: React.FC = () => {
                             {s.number}
                           </span>{' '}
                           {s.shotSize} · {s.duration}s — {s.description}
-                          {s.keyframeUrl && (
-                            <span className="ml-1 text-emerald-400" title="关键帧">✓</span>
-                          )}
-                          {s.videoUrl && (
-                            <span className="ml-0.5 text-violet-400" title="视频">▶</span>
-                          )}
-                          {s.voiceUrl && (
-                            <span className="ml-0.5 text-amber-400" title="配音">♪</span>
-                          )}
+                          <span className="ml-1 inline-flex items-center gap-0.5 align-middle">
+                            {s.keyframeUrl && (
+                              <ImageIcon
+                                size={10}
+                                className="text-emerald-400"
+                                aria-label="关键帧已生成"
+                              />
+                            )}
+                            {s.videoUrl && (
+                              <Film
+                                size={10}
+                                className="text-violet-400"
+                                aria-label="视频已生成"
+                              />
+                            )}
+                            {s.voiceUrl && (
+                              <Volume2
+                                size={10}
+                                className="text-amber-400"
+                                aria-label="配音已生成"
+                              />
+                            )}
+                          </span>
                         </div>
                       ))}
                     </div>
