@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 import {
   useShotStore,
   useEpisodeStore,
@@ -28,6 +28,7 @@ const ShotTable: React.FC = () => {
   const shots = useShotStore((s) => s.shots);
   const addMany = useShotStore((s) => s.addMany);
   const removeShot = useShotStore((s) => s.remove);
+  const moveShot = useShotStore((s) => s.moveShot);
   const setGenStatus = useShotStore((s) => s.setGenStatus);
   const setKeyframe = useShotStore((s) => s.setKeyframe);
   const setPrompt = useShotStore((s) => s.setPrompt);
@@ -440,6 +441,7 @@ const ShotTable: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-neutral-900 text-neutral-400">
               <tr>
+                <th className="w-10 px-1 py-2 font-medium"></th>
                 <th className="px-3 py-2 font-medium">镜号</th>
                 <th className="px-3 py-2 font-medium">景别</th>
                 <th className="px-3 py-2 font-medium">时长</th>
@@ -451,16 +453,46 @@ const ShotTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800">
-              {filteredShots.map((shot) => {
+              {filteredShots.map((shot, idx) => {
                 const charNames = shot.characters
                   .map((id) => getCharacter(id)?.name ?? id)
                   .join('、');
+                const isFirst = idx === 0;
+                const isLast = idx === filteredShots.length - 1;
                 return (
                   <tr
                     key={shot.id}
                     onClick={() => setDetailShotId(shot.id)}
                     className="group cursor-pointer bg-neutral-950 hover:bg-neutral-900/60"
                   >
+                    <td className="w-10 px-1 py-1 align-middle">
+                      <div className="flex flex-col gap-0.5 opacity-0 transition group-hover:opacity-100">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isFirst) moveShot(shot.id, 'up');
+                          }}
+                          disabled={isFirst}
+                          className="rounded p-0.5 text-neutral-500 hover:bg-neutral-800 hover:text-neutral-200 disabled:cursor-not-allowed disabled:opacity-30"
+                          type="button"
+                          title="上移"
+                        >
+                          <ArrowUp size={11} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isLast) moveShot(shot.id, 'down');
+                          }}
+                          disabled={isLast}
+                          className="rounded p-0.5 text-neutral-500 hover:bg-neutral-800 hover:text-neutral-200 disabled:cursor-not-allowed disabled:opacity-30"
+                          type="button"
+                          title="下移"
+                        >
+                          <ArrowDown size={11} />
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-3 py-2 font-mono text-neutral-500">
                       {shot.number}
                     </td>

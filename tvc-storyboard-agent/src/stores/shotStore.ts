@@ -13,6 +13,7 @@ interface ShotStore {
   update: (id: string, patch: Partial<Shot>) => void;
   remove: (id: string) => void;
   removeByEpisode: (episodeId: string) => void;
+  moveShot: (id: string, direction: 'up' | 'down') => void;
   setGenStatus: (id: string, status: ShotGenStatus) => void;
   setKeyframe: (id: string, url: string) => void;
   setPrompt: (id: string, prompt: string) => void;
@@ -57,6 +58,31 @@ export const useShotStore = create<ShotStore>()(
         set((state) => ({
           shots: state.shots.filter((s) => s.episodeId !== episodeId),
         })),
+
+      moveShot: (id, direction) =>
+        set((state) => {
+          const target = state.shots.find((s) => s.id === id);
+          if (!target) return state;
+          const sameEp = state.shots.filter(
+            (s) => s.episodeId === target.episodeId
+          );
+          const idxInEp = sameEp.findIndex((s) => s.id === id);
+          const swapIdx = direction === 'up' ? idxInEp - 1 : idxInEp + 1;
+          if (swapIdx < 0 || swapIdx >= sameEp.length) return state;
+          const neighbor = sameEp[swapIdx]!;
+
+          // 在完整 shots 数组里交换 target 和 neighbor 的位置
+          const targetAbs = state.shots.findIndex((s) => s.id === target.id);
+          const neighborAbs = state.shots.findIndex(
+            (s) => s.id === neighbor.id
+          );
+          const next = state.shots.slice();
+          [next[targetAbs], next[neighborAbs]] = [
+            next[neighborAbs]!,
+            next[targetAbs]!,
+          ];
+          return { shots: next };
+        }),
 
       setGenStatus: (id, status) =>
         set((state) => ({
