@@ -56,6 +56,62 @@ export function extractSpeechText(shot: Shot): string | null {
   return narration || dialogue || null;
 }
 
+export class BatchVoiceAbortError extends Error {
+  constructor() {
+    super('用户中止了批量配音。');
+    this.name = 'BatchVoiceAbortError';
+  }
+}
+
+/**
+ * 顺序为一批镜头合成配音。只处理有 narration 或 dialogue 的镜头。
+ * 支持 AbortSignal 中止（只在每个 shot 边界生效）。
+ */
+export async function generateVoiceForShots(params: {
+  shots: Shot[];
+  speaker: string;
+  onStart: (shotId: string) => void;
+  onSuccess: (shotId: string, url: string, speaker: string) => void;
+  onFailure: (shotId: string, error: string) => void;
+  onSkip: (shotId: string) => void;
+  signal?: AbortSignal;
+}): Promise<{
+  successCount: number;
+  failCount: number;
+  skipCount: number;
+  aborted: boolean;
+}> {
+  const { shots, speaker, onStart, onSuccess, onFailure, onSkip, signal } =
+    params;
+  let successCount = 0;
+  let failCount = 0;
+  let skipCount = 0;
+
+  for (const shot of shots) {
+    if (signal?.aborted) {
+      return { successCount, failCount, skipCount, aborted: true };
+    }
+    const text = extractSpeechText(shot);
+    if (!text) {
+      onSkip(shot.id);
+      skipCount++;
+      continue;
+    }
+    onStart(shot.id);
+    try {
+      const url = await generateSpeech(text, speaker);
+      onSuccess(shot.id, url, speaker);
+      successCount++;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      onFailure(shot.id, msg);
+      failCount++;
+    }
+  }
+
+  return { successCount, failCount, skipCount, aborted: false };
+}
+
 /**
  * 字幕转写：把音频 data URL 喂给 Gemini，让它写出带时间戳的字幕。
  * 返回原始文本（用户可再转 srt/ass）。

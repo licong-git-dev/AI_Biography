@@ -12,6 +12,7 @@ import {
   type GeneratedShot,
 } from '../episodes/episodeService';
 import { generateKeyframesForShots } from './shotService';
+import { generateVoiceForShots, extractSpeechText } from '../audio/voiceService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import ShotKeyframeModal from './ShotKeyframeModal';
 
@@ -28,6 +29,8 @@ const ShotTable: React.FC = () => {
   const setGenStatus = useShotStore((s) => s.setGenStatus);
   const setKeyframe = useShotStore((s) => s.setKeyframe);
   const setPrompt = useShotStore((s) => s.setPrompt);
+  const setVoice = useShotStore((s) => s.setVoice);
+  const setVoiceGenStatus = useShotStore((s) => s.setVoiceGenStatus);
 
   const activeEpisodeId = useEpisodeStore((s) => s.activeId);
   const getEpisode = useEpisodeStore((s) => s.getById);
@@ -46,6 +49,12 @@ const ShotTable: React.FC = () => {
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchSummary, setBatchSummary] = useState<string | null>(null);
   const batchAbortRef = useRef<AbortController | null>(null);
+
+  // 批量配音
+  const [voiceRunning, setVoiceRunning] = useState(false);
+  const [voiceSummary, setVoiceSummary] = useState<string | null>(null);
+  const [voiceSpeaker, setVoiceSpeaker] = useState('Kore');
+  const voiceAbortRef = useRef<AbortController | null>(null);
 
   // 详情 modal
   const [detailShotId, setDetailShotId] = useState<string | null>(null);
@@ -157,8 +166,73 @@ const ShotTable: React.FC = () => {
     batchAbortRef.current?.abort();
   };
 
+  const handleBatchVoice = async () => {
+    if (!activeEpisode || filteredShots.length === 0) return;
+    setVoiceSummary(null);
+    setVoiceRunning(true);
+    const controller = new AbortController();
+    voiceAbortRef.current = controller;
+    try {
+      const targets = filteredShots.filter(
+        (s) =>
+          extractSpeechText(s) &&
+          (s.voiceGenStatus === '未生成' ||
+            s.voiceGenStatus === '失败' ||
+            !s.voiceGenStatus)
+      );
+      if (targets.length === 0) {
+        setVoiceSummary('没有可配音的镜头（要么已配好，要么没有旁白/对白）');
+        return;
+      }
+      const result = await generateVoiceForShots({
+        shots: targets,
+        speaker: voiceSpeaker,
+        signal: controller.signal,
+        onStart: (id) => setVoiceGenStatus(id, '生成中'),
+        onSuccess: (id, url, speaker) => setVoice(id, url, speaker),
+        onFailure: (id) => setVoiceGenStatus(id, '失败'),
+        onSkip: () => {
+          /* 不改变状态，只计数 */
+        },
+      });
+      if (result.aborted) {
+        setVoiceSummary(
+          `已中止：${result.successCount} 成功 · ${result.failCount} 失败 · 剩余未处理`
+        );
+      } else {
+        setVoiceSummary(
+          `完成：${result.successCount} 成功 · ${result.failCount} 失败 · ${result.skipCount} 跳过（无文本）`
+        );
+      }
+    } catch (e) {
+      if (e instanceof ApiKeyMissingError) {
+        openApiKey();
+        setVoiceSummary('未配置 API Key');
+      } else {
+        setVoiceSummary(
+          `批量中断：${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    } finally {
+      setVoiceRunning(false);
+      voiceAbortRef.current = null;
+    }
+  };
+
+  const handleCancelVoice = () => {
+    voiceAbortRef.current?.abort();
+  };
+
   const ungenCount = filteredShots.filter(
     (s) => s.genStatus === '未生成' || s.genStatus === '失败'
+  ).length;
+
+  const voiceTargetCount = filteredShots.filter(
+    (s) =>
+      extractSpeechText(s) &&
+      (s.voiceGenStatus === '未生成' ||
+        s.voiceGenStatus === '失败' ||
+        !s.voiceGenStatus)
   ).length;
 
   return (
@@ -186,12 +260,12 @@ const ShotTable: React.FC = () => {
                 className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1 text-[11px] font-medium text-red-300 hover:border-red-700"
                 type="button"
               >
-                中止
+                中止帧
               </button>
             )}
             <button
               onClick={handleBatchKeyframes}
-              disabled={batchRunning || ungenCount === 0}
+              disabled={batchRunning || voiceRunning || ungenCount === 0}
               className="rounded border border-sky-800 bg-sky-900/30 px-2.5 py-1 text-[11px] font-medium text-sky-200 hover:border-sky-700 hover:bg-sky-900/50 disabled:cursor-not-allowed disabled:opacity-40"
               type="button"
               title={
@@ -202,7 +276,45 @@ const ShotTable: React.FC = () => {
             >
               {batchRunning
                 ? '批量生成中…'
-                : `生成本集全部关键帧（${ungenCount}）`}
+                : `批量关键帧（${ungenCount}）`}
+            </button>
+
+            <select
+              value={voiceSpeaker}
+              onChange={(e) => setVoiceSpeaker(e.target.value)}
+              disabled={voiceRunning || batchRunning}
+              className="rounded border border-neutral-700 bg-neutral-900 px-1.5 py-1 text-[11px] text-neutral-100 disabled:opacity-50"
+              title="批量配音使用的声线"
+            >
+              <option value="Kore">Kore · 稳重女声</option>
+              <option value="Puck">Puck · 少年男声</option>
+              <option value="Charon">Charon · 低沉男声</option>
+              <option value="Aoede">Aoede · 清亮女声</option>
+            </select>
+
+            {voiceRunning && (
+              <button
+                onClick={handleCancelVoice}
+                className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1 text-[11px] font-medium text-red-300 hover:border-red-700"
+                type="button"
+              >
+                中止声
+              </button>
+            )}
+            <button
+              onClick={handleBatchVoice}
+              disabled={batchRunning || voiceRunning || voiceTargetCount === 0}
+              className="rounded border border-emerald-800 bg-emerald-900/30 px-2.5 py-1 text-[11px] font-medium text-emerald-200 hover:border-emerald-700 hover:bg-emerald-900/50 disabled:cursor-not-allowed disabled:opacity-40"
+              type="button"
+              title={
+                voiceTargetCount === 0
+                  ? '所有带旁白/对白的镜头都已配音'
+                  : `将为 ${voiceTargetCount} 个带旁白/对白且未配音的镜头依次调 Gemini TTS`
+              }
+            >
+              {voiceRunning
+                ? '配音中…'
+                : `批量配音（${voiceTargetCount}）`}
             </button>
           </div>
         )}
@@ -210,7 +322,13 @@ const ShotTable: React.FC = () => {
 
       {batchSummary && (
         <div className="mb-3 rounded border border-neutral-800 bg-neutral-900/40 p-2 text-[11px] text-neutral-300">
-          {batchSummary}
+          关键帧：{batchSummary}
+        </div>
+      )}
+
+      {voiceSummary && (
+        <div className="mb-3 rounded border border-neutral-800 bg-neutral-900/40 p-2 text-[11px] text-neutral-300">
+          配音：{voiceSummary}
         </div>
       )}
 
