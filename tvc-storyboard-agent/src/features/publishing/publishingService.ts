@@ -2,6 +2,7 @@ import type { Episode, PublishingPack, PlatformCopy } from '../../types';
 import { PLATFORMS } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
 import { SYSTEM_PROMPT_CORE } from '../../services/systemPrompt';
+import { cleanJson } from '../../services/jsonUtils';
 
 const PLATFORM_RULES = `
 【各平台文案风格】
@@ -10,14 +11,6 @@ const PLATFORM_RULES = `
 - 小红书：标题可用 emoji，强种草感；简介分段，有金句；标签 5-8 个话题标签
 - B站：标题可更长一些，允许小标题 + 冒号结构；简介可详细一点，面向年轻核心受众；标签 3-5 个
 `;
-
-function cleanJson(text: string): string {
-  return text
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```\s*$/, '')
-    .trim();
-}
 
 function buildPrompt(episode: Episode): string {
   return `为下面这一集生成**所有 4 个平台**的发布文案包。

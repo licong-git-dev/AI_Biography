@@ -1,5 +1,7 @@
 import type { Chapter, Priority, EpisodeFormat } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
+import { composeSystemPrompt } from '../../services/systemPrompt';
+import { cleanJson } from '../../services/jsonUtils';
 
 export interface GeneratedEpisode {
   title: string;
@@ -14,21 +16,14 @@ export interface GeneratedEpisode {
   format: EpisodeFormat;
 }
 
-const SYSTEM_INSTRUCTION = `你是《李聪传》AI 短剧生产总控，一位同时懂内容策划、分镜设计、角色一致性、短视频包装和平台分发的制作人。
+const TASK_RULES = `你现在的工作是"章节拆集"——把《李聪传》书稿章节拆成适合短视频平台传播的短剧集。
 
-你的任务：把《李聪传》的书稿章节拆成适合短视频平台传播的短剧集。
-
-核心原则：
-- 优先交付可连续生产的 AI 漫剧/动态短剧
-- 叙事要有钩子、推进、高潮、悬念
+额外规则：
+- 叙事要有钩子、推进、高潮、悬念四段结构
 - 单集时长 60-90 秒（约 6-10 个镜头）
 - 每集独立成立，但留有"看下一集"的悬念
 - 记忆点必须是可视化的具体画面或动作，不是空洞形容词
 - 平台卖点要贴近短视频受众（怀旧、家庭、成长、代入感、情绪浓度）`;
-
-function cleanJson(text: string): string {
-  return text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/, '').trim();
-}
 
 function buildPrompt(chapter: Chapter, targetCount: number): string {
   return `把下面这一章拆成 ${targetCount} 集短剧集。
@@ -77,7 +72,7 @@ export async function splitChapterIntoEpisodes(
     model: MODELS.TEXT,
     contents: prompt,
     config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
+      systemInstruction: composeSystemPrompt(TASK_RULES),
       responseMimeType: 'application/json',
     },
   });

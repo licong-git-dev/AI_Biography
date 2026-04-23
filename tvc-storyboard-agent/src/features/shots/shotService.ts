@@ -48,16 +48,18 @@ ${baselines || '（本镜头无角色出场，以环境/道具为主）'}
 输出：该镜头的单帧关键帧静图（不是视频，不是组图）。`;
 }
 
-function extractInlineParts(refImageUrls: string[]) {
+type InlinePart = { inlineData: { mimeType: string; data: string } };
+type TextPart = { text: string };
+type Part = InlinePart | TextPart;
+
+function extractInlineParts(refImageUrls: string[]): InlinePart[] {
   return refImageUrls
-    .map((url) => {
+    .map((url): InlinePart | null => {
       const m = url.match(/^data:(.*?);base64,(.+)$/);
-      if (!m) return null;
-      return { inlineData: { mimeType: m[1] ?? 'image/png', data: m[2]! } };
+      if (!m || !m[2]) return null;
+      return { inlineData: { mimeType: m[1] ?? 'image/png', data: m[2] } };
     })
-    .filter((v): v is { inlineData: { mimeType: string; data: string } } =>
-      v !== null
-    );
+    .filter((v): v is InlinePart => v !== null);
 }
 
 export async function generateShotKeyframe(
@@ -68,17 +70,18 @@ export async function generateShotKeyframe(
   const prompt = buildShotPrompt(shot, characters);
 
   const refImageUrls = characters
-    .filter((c) => shot.characters.includes(c.id) && c.referenceImageUrl)
-    .map((c) => c.referenceImageUrl!);
+    .filter((c) => shot.characters.includes(c.id))
+    .map((c) => c.referenceImageUrl)
+    .filter((url): url is string => typeof url === 'string' && url.length > 0);
 
-  const parts: unknown[] = [
+  const parts: Part[] = [
     ...extractInlineParts(refImageUrls),
     { text: prompt },
   ];
 
   const response = await ai.models.generateContent({
     model: MODELS.IMAGE,
-    contents: [{ role: 'user', parts: parts as never }],
+    contents: [{ role: 'user', parts }],
     config: {
       imageConfig: {
         aspectRatio: '9:16',

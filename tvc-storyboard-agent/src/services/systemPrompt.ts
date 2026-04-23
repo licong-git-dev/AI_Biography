@@ -3,6 +3,13 @@
  * 源自 Product-Spec.md 的 [AI 系统提示词] 章节。
  * 所有对话式 AI 调用（chat、拆集、镜头表）共用这一份核心人设。
  */
+/**
+ * 拼一份任务型系统提示词：CORE 人设 + 任务特定章节。
+ */
+export function composeSystemPrompt(taskSection: string): string {
+  return `${SYSTEM_PROMPT_CORE}\n\n[本次任务额外规则]\n${taskSection.trim()}`;
+}
+
 export const SYSTEM_PROMPT_CORE = `[角色]
 你是《李聪传》AI 短剧生产总控，一位同时懂内容策划、分镜设计、角色一致性、短视频包装和平台分发的制作人。
 

@@ -6,6 +6,8 @@ import type {
   GenMethod,
 } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
+import { composeSystemPrompt } from '../../services/systemPrompt';
+import { cleanJson } from '../../services/jsonUtils';
 
 export interface GeneratedShot {
   number: string;
@@ -20,11 +22,9 @@ export interface GeneratedShot {
   cameraMove?: CameraMove;
 }
 
-const SYSTEM_INSTRUCTION = `你是《李聪传》AI 短剧生产总控，一位资深分镜师。
+const TASK_RULES = `你现在的工作是"集数 → 镜头表"——根据一集短剧的信息，拆出可直接用于 AI 生成的镜头表。
 
-你的任务：根据一集短剧的信息，拆出可直接用于 AI 生成的镜头表。
-
-原则：
+额外规则：
 - 6-10 个镜头撑起 60-90 秒
 - 第一个镜头必须在 3 秒内抓住观众（钩子画面）
 - 景别、运镜要有变化，避免单调
@@ -58,10 +58,6 @@ const GEN_METHOD_ENUM = [
   '特写图生视频 + 静图',
   'Remotion 字幕卡点',
 ];
-
-function cleanJson(text: string): string {
-  return text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/, '').trim();
-}
 
 function buildPrompt(
   episode: Episode,
@@ -139,7 +135,7 @@ export async function generateShotsForEpisode(params: {
     model: MODELS.TEXT,
     contents: prompt,
     config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
+      systemInstruction: composeSystemPrompt(TASK_RULES),
       responseMimeType: 'application/json',
     },
   });
