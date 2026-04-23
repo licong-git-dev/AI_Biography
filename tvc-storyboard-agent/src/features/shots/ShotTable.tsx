@@ -7,12 +7,17 @@ import {
   useUIStore,
 } from '../../stores';
 import type { Shot, ShotGenStatus } from '../../types';
-import { generateShotsForEpisode, type GeneratedShot } from '../episodes/episodeService';
+import {
+  generateShotsForEpisode,
+  type GeneratedShot,
+} from '../episodes/episodeService';
+import { generateKeyframesForShots } from './shotService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import ShotKeyframeModal from './ShotKeyframeModal';
 
 const STATUS_COLOR: Record<ShotGenStatus, string> = {
   未生成: 'bg-neutral-800 text-neutral-500',
-  生成中: 'bg-sky-900/40 text-sky-300',
+  生成中: 'bg-sky-900/40 text-sky-300 animate-pulse',
   已生成: 'bg-emerald-900/40 text-emerald-300',
   失败: 'bg-red-900/40 text-red-300',
 };
@@ -20,6 +25,10 @@ const STATUS_COLOR: Record<ShotGenStatus, string> = {
 const ShotTable: React.FC = () => {
   const shots = useShotStore((s) => s.shots);
   const addMany = useShotStore((s) => s.addMany);
+  const setGenStatus = useShotStore((s) => s.setGenStatus);
+  const setKeyframe = useShotStore((s) => s.setKeyframe);
+  const setPrompt = useShotStore((s) => s.setPrompt);
+
   const activeEpisodeId = useEpisodeStore((s) => s.activeId);
   const getEpisode = useEpisodeStore((s) => s.getById);
   const getCharacter = useCharacterStore((s) => s.getById);
@@ -27,10 +36,18 @@ const ShotTable: React.FC = () => {
   const chapters = useChapterStore((s) => s.chapters);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
 
+  // AI 生成镜头表
   const [targetCount, setTargetCount] = useState(8);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [proposals, setProposals] = useState<GeneratedShot[] | null>(null);
+
+  // 批量关键帧
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchSummary, setBatchSummary] = useState<string | null>(null);
+
+  // 详情 modal
+  const [detailShotId, setDetailShotId] = useState<string | null>(null);
 
   const filteredShots = activeEpisodeId
     ? shots.filter((s) => s.episodeId === activeEpisodeId)
@@ -38,7 +55,7 @@ const ShotTable: React.FC = () => {
 
   const activeEpisode = activeEpisodeId ? getEpisode(activeEpisodeId) : null;
 
-  const handleGenerate = async () => {
+  const handleGenerateShotList = async () => {
     if (!activeEpisode) return;
     setError(null);
     setGenerating(true);
@@ -90,25 +107,85 @@ const ShotTable: React.FC = () => {
     setProposals(null);
   };
 
+  const handleBatchKeyframes = async () => {
+    if (!activeEpisode || filteredShots.length === 0) return;
+    setBatchSummary(null);
+    setBatchRunning(true);
+    try {
+      const result = await generateKeyframesForShots({
+        shots: filteredShots,
+        characters,
+        onStart: (id) => setGenStatus(id, '生成中'),
+        onSuccess: (id, url, prompt) => {
+          setKeyframe(id, url);
+          setPrompt(id, prompt);
+        },
+        onFailure: (id) => setGenStatus(id, '失败'),
+      });
+      setBatchSummary(
+        `完成：${result.successCount} 成功 · ${result.failCount} 失败`
+      );
+    } catch (e) {
+      if (e instanceof ApiKeyMissingError) {
+        openApiKey();
+        setBatchSummary('未配置 API Key');
+      } else {
+        setBatchSummary(
+          `批量中断：${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    } finally {
+      setBatchRunning(false);
+    }
+  };
+
+  const ungenCount = filteredShots.filter(
+    (s) => s.genStatus === '未生成' || s.genStatus === '失败'
+  ).length;
+
   return (
     <div>
+      {/* 顶部状态行 */}
       <div className="mb-3 flex items-center justify-between">
-        <div>
+        <div className="text-xs text-neutral-400">
           {activeEpisode ? (
-            <div className="text-xs text-neutral-400">
+            <>
               当前过滤：EP
               {String(activeEpisode.episodeNumber).padStart(2, '0')}
               《{activeEpisode.title}》· {filteredShots.length} 条镜头
-            </div>
+            </>
           ) : (
-            <div className="text-xs text-neutral-400">
-              全部镜头 · {filteredShots.length} 条（在「集数」tab 选中一集后过滤）
-            </div>
+            <>
+              全部镜头 · {filteredShots.length} 条（「集数」tab 选中一集后过滤）
+            </>
           )}
         </div>
+        {activeEpisode && filteredShots.length > 0 && (
+          <button
+            onClick={handleBatchKeyframes}
+            disabled={batchRunning || ungenCount === 0}
+            className="rounded border border-sky-800 bg-sky-900/30 px-2.5 py-1 text-[11px] font-medium text-sky-200 hover:border-sky-700 hover:bg-sky-900/50 disabled:cursor-not-allowed disabled:opacity-40"
+            type="button"
+            title={
+              ungenCount === 0
+                ? '全部已生成'
+                : `将为 ${ungenCount} 个未生成的镜头依次调 Nano Banana Pro`
+            }
+          >
+            {batchRunning
+              ? '批量生成中…'
+              : `生成本集全部关键帧（${ungenCount}）`}
+          </button>
+        )}
       </div>
 
-      {/* AI 生成镜头表区域（空状态 + 有选中集时） */}
+      {batchSummary && (
+        <div className="mb-3 rounded border border-neutral-800 bg-neutral-900/40 p-2 text-[11px] text-neutral-300">
+          {batchSummary}
+        </div>
+      )}
+
+      {/* AI 生成镜头表（空态 + 有选中集） */}
       {activeEpisode && filteredShots.length === 0 && !proposals && (
         <div className="mb-4 rounded-lg border border-dashed border-sky-900/50 bg-sky-950/10 p-6 text-center">
           <p className="text-sm text-neutral-300">
@@ -129,7 +206,7 @@ const ShotTable: React.FC = () => {
               ))}
             </select>
             <button
-              onClick={handleGenerate}
+              onClick={handleGenerateShotList}
               disabled={generating}
               className="rounded bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
@@ -187,7 +264,7 @@ const ShotTable: React.FC = () => {
                 <th className="px-3 py-2 font-medium">时长</th>
                 <th className="px-3 py-2 font-medium">画面描述</th>
                 <th className="px-3 py-2 font-medium">角色</th>
-                <th className="px-3 py-2 font-medium">生成方式</th>
+                <th className="px-3 py-2 font-medium">关键帧</th>
                 <th className="px-3 py-2 font-medium">状态</th>
               </tr>
             </thead>
@@ -199,7 +276,8 @@ const ShotTable: React.FC = () => {
                 return (
                   <tr
                     key={shot.id}
-                    className="bg-neutral-950 hover:bg-neutral-900/60"
+                    onClick={() => setDetailShotId(shot.id)}
+                    className="cursor-pointer bg-neutral-950 hover:bg-neutral-900/60"
                   >
                     <td className="px-3 py-2 font-mono text-neutral-500">
                       {shot.number}
@@ -216,8 +294,18 @@ const ShotTable: React.FC = () => {
                     <td className="px-3 py-2 text-neutral-400">
                       {charNames || '—'}
                     </td>
-                    <td className="px-3 py-2 text-[11px] text-neutral-500">
-                      {shot.genMethod}
+                    <td className="px-3 py-2">
+                      {shot.keyframeUrl ? (
+                        <img
+                          src={shot.keyframeUrl}
+                          alt=""
+                          className="h-12 w-auto rounded border border-neutral-800"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-neutral-600">
+                          点击生成
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       <span
@@ -239,6 +327,11 @@ const ShotTable: React.FC = () => {
           在「集数」tab 先选中一集，回来就能 AI 生成镜头表。
         </div>
       )}
+
+      <ShotKeyframeModal
+        shotId={detailShotId}
+        onClose={() => setDetailShotId(null)}
+      />
     </div>
   );
 };
