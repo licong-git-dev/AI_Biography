@@ -22,4 +22,7 @@ export interface Episode {
   targetDuration: string;
   status: EpisodeStatus;
   shotIds?: string[];
+  hook?: string;
+  climax?: string;
+  suspense?: string;
 }

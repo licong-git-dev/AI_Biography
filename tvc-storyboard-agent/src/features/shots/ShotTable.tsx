@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useShotStore,
   useEpisodeStore,
   useCharacterStore,
+  useChapterStore,
+  useUIStore,
 } from '../../stores';
-import type { ShotGenStatus } from '../../types';
+import type { Shot, ShotGenStatus } from '../../types';
+import { generateShotsForEpisode, type GeneratedShot } from '../episodes/episodeService';
+import { ApiKeyMissingError } from '../../services/geminiClient';
 
 const STATUS_COLOR: Record<ShotGenStatus, string> = {
   未生成: 'bg-neutral-800 text-neutral-500',
@@ -15,15 +19,76 @@ const STATUS_COLOR: Record<ShotGenStatus, string> = {
 
 const ShotTable: React.FC = () => {
   const shots = useShotStore((s) => s.shots);
+  const addMany = useShotStore((s) => s.addMany);
   const activeEpisodeId = useEpisodeStore((s) => s.activeId);
   const getEpisode = useEpisodeStore((s) => s.getById);
   const getCharacter = useCharacterStore((s) => s.getById);
+  const characters = useCharacterStore((s) => s.characters);
+  const chapters = useChapterStore((s) => s.chapters);
+  const openApiKey = useUIStore((s) => s.openApiKeyModal);
+
+  const [targetCount, setTargetCount] = useState(8);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [proposals, setProposals] = useState<GeneratedShot[] | null>(null);
 
   const filteredShots = activeEpisodeId
     ? shots.filter((s) => s.episodeId === activeEpisodeId)
     : shots;
 
   const activeEpisode = activeEpisodeId ? getEpisode(activeEpisodeId) : null;
+
+  const handleGenerate = async () => {
+    if (!activeEpisode) return;
+    setError(null);
+    setGenerating(true);
+    setProposals(null);
+    try {
+      const sourceChapter = chapters.find((c) =>
+        activeEpisode.sourceChapters.includes(c.number)
+      );
+      const result = await generateShotsForEpisode({
+        episode: activeEpisode,
+        characters,
+        chapterExcerpt: sourceChapter?.content ?? null,
+        targetCount,
+      });
+      setProposals(result);
+    } catch (e) {
+      if (e instanceof ApiKeyMissingError) {
+        setError(e.message);
+        openApiKey();
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSaveProposals = () => {
+    if (!proposals || !activeEpisode) return;
+    const newShots: Shot[] = proposals.map((p, idx) => {
+      const num = p.number || String(idx + 1).padStart(2, '0');
+      return {
+        id: `sh-${activeEpisode.id}-${num}-${Math.random().toString(36).slice(2, 6)}`,
+        episodeId: activeEpisode.id,
+        number: num,
+        duration: p.duration,
+        shotSize: p.shotSize,
+        description: p.description,
+        characters: p.characters ?? [],
+        audioNotes: p.audioNotes,
+        genMethod: p.genMethod,
+        cameraMove: p.cameraMove,
+        narration: p.narration,
+        dialogue: p.dialogue,
+        genStatus: '未生成',
+      };
+    });
+    addMany(newShots);
+    setProposals(null);
+  };
 
   return (
     <div>
@@ -43,11 +108,76 @@ const ShotTable: React.FC = () => {
         </div>
       </div>
 
-      {filteredShots.length === 0 ? (
-        <div className="rounded border border-dashed border-neutral-800 bg-neutral-900/40 p-8 text-center text-sm text-neutral-500">
-          当前集数还没有镜头。Phase 4 将支持从章节原文自动拆出镜头表。
+      {/* AI 生成镜头表区域（空状态 + 有选中集时） */}
+      {activeEpisode && filteredShots.length === 0 && !proposals && (
+        <div className="mb-4 rounded-lg border border-dashed border-sky-900/50 bg-sky-950/10 p-6 text-center">
+          <p className="text-sm text-neutral-300">
+            本集暂无镜头表。让 AI 根据集信息和章节节选拆出镜头表 →
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <label className="text-[11px] text-neutral-400">目标镜头数</label>
+            <select
+              value={targetCount}
+              onChange={(e) => setTargetCount(Number(e.target.value))}
+              disabled={generating}
+              className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs text-neutral-100"
+            >
+              {[6, 7, 8, 9, 10].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="rounded bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+            >
+              {generating ? '生成中…（15-30 秒）' : 'AI 生成镜头表'}
+            </button>
+          </div>
+          {error && (
+            <div className="mt-3 rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
+              {error}
+            </div>
+          )}
         </div>
-      ) : (
+      )}
+
+      {/* AI 提议的镜头表预览 */}
+      {proposals && proposals.length > 0 && activeEpisode && (
+        <div className="mb-4 rounded-lg border border-sky-900/40 bg-sky-950/10 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs text-neutral-300">
+              AI 提议的 {proposals.length} 个镜头：
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setProposals(null)}
+                className="rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-400 hover:border-neutral-700"
+                type="button"
+              >
+                丢弃
+              </button>
+              <button
+                onClick={handleSaveProposals}
+                className="rounded bg-emerald-700 px-2 py-1 text-[11px] font-medium text-white hover:bg-emerald-600"
+                type="button"
+              >
+                全部保存到镜头表
+              </button>
+            </div>
+          </div>
+          <ShotPreviewTable
+            proposals={proposals}
+            getCharacter={getCharacter}
+          />
+        </div>
+      )}
+
+      {/* 已存在的镜头表 */}
+      {filteredShots.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-neutral-800">
           <table className="w-full text-left text-xs">
             <thead className="bg-neutral-900 text-neutral-400">
@@ -103,8 +233,57 @@ const ShotTable: React.FC = () => {
           </table>
         </div>
       )}
+
+      {filteredShots.length === 0 && !activeEpisode && (
+        <div className="rounded border border-dashed border-neutral-800 bg-neutral-900/40 p-8 text-center text-sm text-neutral-500">
+          在「集数」tab 先选中一集，回来就能 AI 生成镜头表。
+        </div>
+      )}
     </div>
   );
 };
+
+const ShotPreviewTable: React.FC<{
+  proposals: GeneratedShot[];
+  getCharacter: (id: string) => { name: string } | undefined;
+}> = ({ proposals, getCharacter }) => (
+  <div className="overflow-x-auto rounded border border-neutral-800/50">
+    <table className="w-full text-left text-[11px]">
+      <thead className="bg-neutral-900/60 text-neutral-400">
+        <tr>
+          <th className="px-2 py-1.5">镜号</th>
+          <th className="px-2 py-1.5">景别</th>
+          <th className="px-2 py-1.5">时长</th>
+          <th className="px-2 py-1.5">画面</th>
+          <th className="px-2 py-1.5">旁白/对白</th>
+          <th className="px-2 py-1.5">角色</th>
+          <th className="px-2 py-1.5">方式</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-neutral-800/50">
+        {proposals.map((p, idx) => {
+          const names = (p.characters ?? [])
+            .map((id) => getCharacter(id)?.name ?? id)
+            .join('、');
+          return (
+            <tr key={idx} className="bg-neutral-950/40">
+              <td className="px-2 py-1.5 font-mono text-neutral-500">
+                {p.number}
+              </td>
+              <td className="px-2 py-1.5">{p.shotSize}</td>
+              <td className="px-2 py-1.5">{p.duration}s</td>
+              <td className="px-2 py-1.5">{p.description}</td>
+              <td className="px-2 py-1.5 text-neutral-400">
+                {[p.narration, p.dialogue].filter(Boolean).join(' / ') || '—'}
+              </td>
+              <td className="px-2 py-1.5 text-neutral-400">{names || '—'}</td>
+              <td className="px-2 py-1.5 text-neutral-500">{p.genMethod}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+);
 
 export default ShotTable;

@@ -1,13 +1,35 @@
-import React from 'react';
-import { useChapterStore } from '../../stores';
+import React, { useState } from 'react';
+import { useChapterStore, useEpisodeStore, useUIStore } from '../../stores';
+import type { Episode } from '../../types';
+import {
+  splitChapterIntoEpisodes,
+  type GeneratedEpisode,
+} from './chapterService';
+import { ApiKeyMissingError } from '../../services/geminiClient';
 
 interface Props {
   chapterId: string;
   onBack: () => void;
 }
 
+const PRIORITY_COLOR: Record<string, string> = {
+  S: 'bg-red-900/40 text-red-300 border-red-800/50',
+  A: 'bg-amber-900/40 text-amber-300 border-amber-800/50',
+  'A-': 'bg-amber-900/20 text-amber-400 border-amber-800/30',
+  B: 'bg-neutral-800 text-neutral-400 border-neutral-700',
+};
+
 const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
   const chapter = useChapterStore((s) => s.getById(chapterId));
+  const nextEpisodeNumber = useEpisodeStore((s) => s.nextEpisodeNumber);
+  const addMany = useEpisodeStore((s) => s.addMany);
+  const setCenterTab = useUIStore((s) => s.setCenterTab);
+  const openApiKey = useUIStore((s) => s.openApiKeyModal);
+
+  const [targetCount, setTargetCount] = useState(3);
+  const [proposals, setProposals] = useState<GeneratedEpisode[] | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!chapter) {
     return (
@@ -23,6 +45,54 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
       </div>
     );
   }
+
+  const handleSplit = async () => {
+    setError(null);
+    setGenerating(true);
+    setProposals(null);
+    try {
+      const result = await splitChapterIntoEpisodes(chapter, targetCount);
+      setProposals(result);
+    } catch (e) {
+      if (e instanceof ApiKeyMissingError) {
+        setError(e.message);
+        openApiKey();
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSaveAll = () => {
+    if (!proposals) return;
+    let n = nextEpisodeNumber(1);
+    const newEpisodes: Episode[] = proposals.map((p) => {
+      const ep: Episode = {
+        id: `ep-s1-${String(n).padStart(2, '0')}-${Math.random().toString(36).slice(2, 6)}`,
+        seasonNumber: 1,
+        episodeNumber: n,
+        title: p.title,
+        sourceChapters: [chapter.number],
+        mainConflict: p.mainConflict,
+        memoryPoints: p.memoryPoints,
+        platformSellingPoint: p.platformSellingPoint,
+        priority: p.priority,
+        format: p.format,
+        targetDuration: p.targetDuration,
+        status: '规划中',
+        hook: p.hook,
+        climax: p.climax,
+        suspense: p.suspense,
+      };
+      n += 1;
+      return ep;
+    });
+    addMany(newEpisodes);
+    setProposals(null);
+    setCenterTab('episodes');
+  };
 
   return (
     <div>
@@ -43,15 +113,123 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
         </h2>
       </div>
 
-      <article className="scrollbar-thin max-h-[calc(100vh-200px)] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
+      {/* AI 拆集 控制区 */}
+      <div className="mb-4 rounded-lg border border-sky-900/40 bg-sky-950/10 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium text-neutral-200">
+              AI 拆集
+            </div>
+            <div className="mt-0.5 text-[11px] text-neutral-500">
+              把本章拆成可独立成立的短剧集（带钩子 / 高潮 / 悬念）
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-[11px] text-neutral-400">目标集数</label>
+            <select
+              value={targetCount}
+              onChange={(e) => setTargetCount(Number(e.target.value))}
+              className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs text-neutral-100"
+              disabled={generating}
+            >
+              {[2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleSplit}
+              disabled={generating}
+              className="rounded bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+            >
+              {generating ? '拆集中…（15-30 秒）' : 'AI 拆集'}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-3 rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
+            {error}
+          </div>
+        )}
+
+        {proposals && proposals.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-neutral-300">
+                AI 提议的 {proposals.length} 集：
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setProposals(null)}
+                  className="rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-400 hover:border-neutral-700"
+                  type="button"
+                >
+                  丢弃
+                </button>
+                <button
+                  onClick={handleSaveAll}
+                  className="rounded bg-emerald-700 px-2 py-1 text-[11px] font-medium text-white hover:bg-emerald-600"
+                  type="button"
+                >
+                  全部保存为集数
+                </button>
+              </div>
+            </div>
+
+            {proposals.map((p, idx) => (
+              <div
+                key={idx}
+                className="rounded border border-neutral-800 bg-neutral-900/60 p-3"
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-neutral-500">
+                    #{idx + 1}
+                  </span>
+                  <span className="text-sm font-medium text-neutral-100">
+                    《{p.title}》
+                  </span>
+                  <span
+                    className={`rounded border px-1.5 py-0.5 text-[10px] ${PRIORITY_COLOR[p.priority] ?? PRIORITY_COLOR.B}`}
+                  >
+                    {p.priority}
+                  </span>
+                  <span className="ml-auto text-[10px] text-neutral-500">
+                    {p.targetDuration}
+                  </span>
+                </div>
+                <div className="mt-2 grid grid-cols-1 gap-1.5 text-[11px]">
+                  <Row label="钩子" value={p.hook} />
+                  <Row label="主冲突" value={p.mainConflict} />
+                  <Row label="高潮" value={p.climax} />
+                  <Row label="悬念" value={p.suspense} />
+                  <Row
+                    label="记忆点"
+                    value={p.memoryPoints.join(' · ')}
+                  />
+                  <Row label="平台卖点" value={p.platformSellingPoint} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 章节正文 */}
+      <article className="scrollbar-thin max-h-[calc(100vh-400px)] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
         {chapter.content}
       </article>
-
-      <div className="mt-4 border-t border-neutral-800 pt-3 text-[11px] text-neutral-600">
-        Phase 4 将在此处加「拆集」AI 操作 → 自动产出 2–3 集短剧集。
-      </div>
     </div>
   );
 };
+
+const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex items-start gap-2">
+    <span className="shrink-0 w-14 text-neutral-500">{label}</span>
+    <span className="text-neutral-300">{value}</span>
+  </div>
+);
 
 export default ChapterDetail;
