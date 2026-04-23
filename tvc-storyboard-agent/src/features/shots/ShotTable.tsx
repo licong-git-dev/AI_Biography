@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import {
   useShotStore,
   useEpisodeStore,
@@ -26,6 +27,7 @@ const STATUS_COLOR: Record<ShotGenStatus, string> = {
 const ShotTable: React.FC = () => {
   const shots = useShotStore((s) => s.shots);
   const addMany = useShotStore((s) => s.addMany);
+  const removeShot = useShotStore((s) => s.remove);
   const setGenStatus = useShotStore((s) => s.setGenStatus);
   const setKeyframe = useShotStore((s) => s.setKeyframe);
   const setPrompt = useShotStore((s) => s.setPrompt);
@@ -413,6 +415,7 @@ const ShotTable: React.FC = () => {
                 <th className="px-3 py-2 font-medium">角色</th>
                 <th className="px-3 py-2 font-medium">关键帧</th>
                 <th className="px-3 py-2 font-medium">状态</th>
+                <th className="w-8 px-2 py-2 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800">
@@ -424,7 +427,7 @@ const ShotTable: React.FC = () => {
                   <tr
                     key={shot.id}
                     onClick={() => setDetailShotId(shot.id)}
-                    className="cursor-pointer bg-neutral-950 hover:bg-neutral-900/60"
+                    className="group cursor-pointer bg-neutral-950 hover:bg-neutral-900/60"
                   >
                     <td className="px-3 py-2 font-mono text-neutral-500">
                       {shot.number}
@@ -460,6 +463,21 @@ const ShotTable: React.FC = () => {
                       >
                         {shot.genStatus}
                       </span>
+                    </td>
+                    <td className="w-8 px-2 py-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`删除镜头 ${shot.number}（${shot.description.slice(0, 30)}...）？`)) {
+                            removeShot(shot.id);
+                          }
+                        }}
+                        className="rounded p-1 text-neutral-600 opacity-0 transition hover:bg-red-950/40 hover:text-red-400 group-hover:opacity-100"
+                        type="button"
+                        title="删除本镜头"
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </td>
                   </tr>
                 );
