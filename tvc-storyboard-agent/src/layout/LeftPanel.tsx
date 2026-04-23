@@ -52,7 +52,15 @@ const LeftPanel: React.FC = () => {
                         }`}
                       >
                         <div className="flex justify-between items-center">
-                          <span>{c.name}</span>
+                          <span className="flex items-center gap-1.5">
+                            {c.referenceImageUrl && (
+                              <span
+                                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                title="已生成参考图"
+                              />
+                            )}
+                            <span>{c.name}</span>
+                          </span>
                           <span className="text-[10px] text-neutral-500">
                             {c.ageRange}
                           </span>
