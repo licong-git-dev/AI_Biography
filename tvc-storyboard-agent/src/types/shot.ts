@@ -33,6 +33,9 @@ export type GenMethod =
 
 export type ShotGenStatus = '未生成' | '生成中' | '已生成' | '失败';
 
+export type VideoGenStatus = '未生成' | '生成中' | '已生成' | '失败';
+export type VoiceGenStatus = '未生成' | '生成中' | '已生成' | '失败';
+
 export interface Shot {
   id: string;
   episodeId: string;
@@ -49,4 +52,12 @@ export interface Shot {
   prompt?: string;
   keyframeUrl?: string;
   genStatus: ShotGenStatus;
+
+  videoUrl?: string;
+  videoPrompt?: string;
+  videoGenStatus?: VideoGenStatus;
+
+  voiceUrl?: string;
+  voiceGenStatus?: VoiceGenStatus;
+  voiceSpeaker?: string;
 }

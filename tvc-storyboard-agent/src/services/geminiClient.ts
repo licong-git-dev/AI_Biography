@@ -6,6 +6,9 @@ export const MODELS = {
   FAST: 'gemini-3-flash-preview',
   VISION: 'gemini-3-pro-preview',
   IMAGE: 'gemini-3-pro-image-preview', // Nano Banana Pro
+  VIDEO: 'veo-3.0-generate-preview', // Veo 3 image-to-video
+  TTS: 'gemini-2.5-flash-preview-tts', // 语音合成
+  STT: 'gemini-3-pro-preview', // 转写（走 vision/audio 理解）
 } as const;
 
 export class ApiKeyMissingError extends Error {

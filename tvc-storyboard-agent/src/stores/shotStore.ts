@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Shot, ShotGenStatus } from '../types';
+import type { Shot, ShotGenStatus, VideoGenStatus, VoiceGenStatus } from '../types';
 import { SEED_SHOTS } from '../data/samples';
 
 interface ShotStore {
@@ -16,6 +16,10 @@ interface ShotStore {
   setGenStatus: (id: string, status: ShotGenStatus) => void;
   setKeyframe: (id: string, url: string) => void;
   setPrompt: (id: string, prompt: string) => void;
+  setVideoGenStatus: (id: string, status: VideoGenStatus) => void;
+  setVideo: (id: string, url: string, prompt: string) => void;
+  setVoiceGenStatus: (id: string, status: VoiceGenStatus) => void;
+  setVoice: (id: string, url: string, speaker: string) => void;
   resetToSeed: () => void;
 
   getById: (id: string) => Shot | undefined;
@@ -72,6 +76,38 @@ export const useShotStore = create<ShotStore>()(
         set((state) => ({
           shots: state.shots.map((s) =>
             s.id === id ? { ...s, prompt } : s
+          ),
+        })),
+
+      setVideoGenStatus: (id, status) =>
+        set((state) => ({
+          shots: state.shots.map((s) =>
+            s.id === id ? { ...s, videoGenStatus: status } : s
+          ),
+        })),
+
+      setVideo: (id, url, prompt) =>
+        set((state) => ({
+          shots: state.shots.map((s) =>
+            s.id === id
+              ? { ...s, videoUrl: url, videoPrompt: prompt, videoGenStatus: '已生成' }
+              : s
+          ),
+        })),
+
+      setVoiceGenStatus: (id, status) =>
+        set((state) => ({
+          shots: state.shots.map((s) =>
+            s.id === id ? { ...s, voiceGenStatus: status } : s
+          ),
+        })),
+
+      setVoice: (id, url, speaker) =>
+        set((state) => ({
+          shots: state.shots.map((s) =>
+            s.id === id
+              ? { ...s, voiceUrl: url, voiceSpeaker: speaker, voiceGenStatus: '已生成' }
+              : s
           ),
         })),
 

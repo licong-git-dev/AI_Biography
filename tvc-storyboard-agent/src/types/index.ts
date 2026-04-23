@@ -16,4 +16,6 @@ export type {
   CameraMove,
   GenMethod,
   ShotGenStatus,
+  VideoGenStatus,
+  VoiceGenStatus,
 } from './shot';
