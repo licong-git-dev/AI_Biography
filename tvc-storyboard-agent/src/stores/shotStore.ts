@@ -21,6 +21,7 @@ interface ShotStore {
   setVideo: (id: string, url: string, prompt: string) => void;
   setVoiceGenStatus: (id: string, status: VoiceGenStatus) => void;
   setVoice: (id: string, url: string, speaker: string) => void;
+  setSubtitle: (id: string, srt: string) => void;
   resetToSeed: () => void;
 
   getById: (id: string) => Shot | undefined;
@@ -154,6 +155,13 @@ export const useShotStore = create<ShotStore>()(
             s.id === id
               ? { ...s, voiceUrl: url, voiceSpeaker: speaker, voiceGenStatus: '已生成' }
               : s
+          ),
+        })),
+
+      setSubtitle: (id, srt) =>
+        set((state) => ({
+          shots: state.shots.map((s) =>
+            s.id === id ? { ...s, subtitleSrt: srt } : s
           ),
         })),
 

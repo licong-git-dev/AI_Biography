@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Download, Pencil } from 'lucide-react';
 import { useCharacterStore, useShotStore, useUIStore } from '../../stores';
 import { generateShotKeyframe } from './shotService';
 import { generateShotVideo } from '../video/videoService';
-import { generateSpeech, extractSpeechText } from '../audio/voiceService';
+import {
+  generateSpeech,
+  extractSpeechText,
+  transcribeAudio,
+} from '../audio/voiceService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import Spinner from '../../components/Spinner';
 import { useEscapeKey } from '../../components/useEscapeKey';
@@ -30,12 +34,14 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
   const setVideoGenStatus = useShotStore((s) => s.setVideoGenStatus);
   const setVoice = useShotStore((s) => s.setVoice);
   const setVoiceGenStatus = useShotStore((s) => s.setVoiceGenStatus);
+  const setSubtitle = useShotStore((s) => s.setSubtitle);
   const characters = useCharacterStore((s) => s.characters);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
 
   const [generatingImage, setGeneratingImage] = useState(false);
   const [generatingVideo, setGeneratingVideo] = useState(false);
   const [generatingVoice, setGeneratingVoice] = useState(false);
+  const [generatingSrt, setGeneratingSrt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [speaker, setSpeaker] = useState('Kore');
   const [editOpen, setEditOpen] = useState(false);
@@ -97,6 +103,33 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     }
   };
 
+  const handleGenerateSrt = async () => {
+    if (!shot.voiceUrl) return;
+    setError(null);
+    setGeneratingSrt(true);
+    try {
+      const srt = await transcribeAudio(shot.voiceUrl);
+      setSubtitle(shot.id, srt);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setGeneratingSrt(false);
+    }
+  };
+
+  const handleDownloadSrt = () => {
+    if (!shot.subtitleSrt) return;
+    const blob = new Blob([shot.subtitleSrt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `shot-${shot.number.replace(/[\\/:*?"<>|]/g, '_')}.srt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const handleError = (e: unknown) => {
     if (e instanceof ApiKeyMissingError) {
       setError(e.message);
@@ -106,7 +139,8 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     }
   };
 
-  const anyRunning = generatingImage || generatingVideo || generatingVoice;
+  const anyRunning =
+    generatingImage || generatingVideo || generatingVoice || generatingSrt;
 
   return (
     <div
@@ -308,6 +342,46 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
                     ? '重新合成'
                     : '合成旁白'}
               </button>
+            </div>
+          )}
+
+          {/* SRT 字幕 */}
+          {shot.voiceUrl && (
+            <div className="mt-4 border-t border-neutral-800/60 pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-neutral-300">
+                  字幕（SRT）
+                </span>
+                <div className="flex gap-2">
+                  {shot.subtitleSrt && (
+                    <button
+                      onClick={handleDownloadSrt}
+                      className="flex items-center gap-1 rounded border border-neutral-800 px-2 py-0.5 text-[10px] text-neutral-300 hover:border-neutral-700"
+                      type="button"
+                    >
+                      <Download size={10} /> 下载 .srt
+                    </button>
+                  )}
+                  <button
+                    onClick={handleGenerateSrt}
+                    disabled={anyRunning}
+                    className="flex items-center gap-1 rounded bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-100 hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    type="button"
+                  >
+                    {generatingSrt && <Spinner size={9} />}
+                    {generatingSrt
+                      ? '转写中…'
+                      : shot.subtitleSrt
+                        ? '重新转写'
+                        : '从音频转写 SRT'}
+                  </button>
+                </div>
+              </div>
+              {shot.subtitleSrt && (
+                <pre className="scrollbar-thin max-h-32 overflow-y-auto whitespace-pre-wrap rounded border border-neutral-800 bg-neutral-900/60 p-2 font-mono text-[10px] leading-relaxed text-neutral-300">
+                  {shot.subtitleSrt}
+                </pre>
+              )}
             </div>
           )}
         </Section>

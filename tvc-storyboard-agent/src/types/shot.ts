@@ -61,4 +61,6 @@ export interface Shot {
   voiceUrl?: string;
   voiceGenStatus?: VoiceGenStatus;
   voiceSpeaker?: string;
+
+  subtitleSrt?: string;
 }
