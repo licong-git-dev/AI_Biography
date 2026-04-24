@@ -9,3 +9,5 @@ export { useStatsStore } from './statsStore';
 export type { AICallKind } from './statsStore';
 export { useLibraryStore } from './libraryStore';
 export type { SavedHook, SavedStyle } from './libraryStore';
+export { useAlertsStore } from './alertsStore';
+export type { EpisodeAlert, AlertSeverity } from './alertsStore';

@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Episode, EpisodeFormat, EpisodeStatus, Priority } from '../../types';
-import { useEpisodeStore } from '../../stores';
+import { useAlertsStore, useEpisodeStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useModalSave } from '../../components/useModalSave';
 import { useFocusTrap } from '../../components/useFocusTrap';
+import { detectDownstreamAlerts } from '../consistency/alertService';
+import { ApiKeyMissingError } from '../../services/geminiClient';
+import { toast } from '../../stores/toastStore';
 
 interface Props {
   episodeId: string | null;
@@ -90,10 +93,58 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
     if (open && episode) setForm(toForm(episode));
   }, [open, episode]);
 
+  const allEpisodes = useEpisodeStore((s) => s.episodes);
+  const addAlerts = useAlertsStore((s) => s.addMany);
+  const clearAlertsByTrigger = useAlertsStore((s) => s.clearByTrigger);
+
   const save = () => {
     if (!episode || !form) return;
-    update(episode.id, fromForm(form));
+    const patch = fromForm(form);
+    const narrativeChanged =
+      (patch.hook ?? '') !== (episode.hook ?? '') ||
+      (patch.climax ?? '') !== (episode.climax ?? '') ||
+      (patch.suspense ?? '') !== (episode.suspense ?? '');
+
+    update(episode.id, patch);
     onClose();
+
+    if (narrativeChanged) {
+      const downstream = allEpisodes.filter(
+        (e) =>
+          e.seasonNumber === episode.seasonNumber &&
+          e.episodeNumber > episode.episodeNumber
+      );
+      if (downstream.length === 0) return;
+
+      // 异步触发联动检查，不阻塞 save；结果写入 alertsStore
+      void (async () => {
+        try {
+          clearAlertsByTrigger(episode.id); // 同一来源的旧警报清掉
+          const changedEpisode = { ...episode, ...patch };
+          const list = await detectDownstreamAlerts({
+            changed: changedEpisode,
+            downstream,
+          });
+          if (list.length === 0) return;
+          addAlerts(
+            list.map((a) => ({
+              triggeredByEpisodeId: episode.id,
+              affectedEpisodeId: a.affectedEpisodeId,
+              severity: a.severity,
+              message: a.message,
+            }))
+          );
+          toast.warning(
+            `联动检查：改动影响了 ${list.length} 个后续集，详见集数卡片角标`,
+            6000
+          );
+        } catch (e) {
+          if (e instanceof ApiKeyMissingError) return;
+          // 静默失败，不打扰用户
+          console.warn('联动检查失败', e);
+        }
+      })();
+    }
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,6 +185,8 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
             ✕
           </button>
         </div>
+
+        <EpisodeAlertsBanner episodeId={episode.id} />
 
         <div className="space-y-4">
           <Field label="标题">
@@ -299,5 +352,51 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({
     {children}
   </div>
 );
+
+const EpisodeAlertsBanner: React.FC<{ episodeId: string }> = ({
+  episodeId,
+}) => {
+  const alerts = useAlertsStore((s) => s.alerts);
+  const acknowledgeAllForEpisode = useAlertsStore((s) => s.acknowledgeAll);
+  const items = alerts.filter(
+    (a) => a.affectedEpisodeId === episodeId && !a.acknowledged
+  );
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mb-4 rounded-lg border border-amber-800 bg-amber-950/30 p-3">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-[11px] font-medium text-amber-200">
+          前面集的改动触发了 {items.length} 条联动警报
+        </span>
+        <button
+          onClick={() => acknowledgeAllForEpisode(episodeId)}
+          className="text-[10px] text-neutral-400 hover:text-neutral-200"
+          type="button"
+        >
+          全部标为已处理
+        </button>
+      </div>
+      <ul className="space-y-1">
+        {items.map((a) => (
+          <li key={a.id} className="text-[11px] text-amber-100">
+            <span
+              className={`mr-1.5 rounded px-1 py-0.5 text-[9px] ${
+                a.severity === 'critical'
+                  ? 'bg-red-800 text-red-50'
+                  : a.severity === 'warning'
+                    ? 'bg-amber-800 text-amber-50'
+                    : 'bg-neutral-700 text-neutral-200'
+              }`}
+            >
+              {a.severity}
+            </span>
+            {a.message}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 export default EpisodeEditModal;

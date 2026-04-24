@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Copy, Pencil, Search, Trash2 } from 'lucide-react';
-import { useEpisodeStore, useShotStore } from '../../stores';
+import { AlertTriangle, Copy, Pencil, Search, Trash2 } from 'lucide-react';
+import { useAlertsStore, useEpisodeStore, useShotStore } from '../../stores';
 import type { Episode, Priority } from '../../types';
 import EpisodeEditModal from './EpisodeEditModal';
 import { toast } from '../../stores/toastStore';
@@ -21,6 +21,8 @@ const EpisodeList: React.FC = () => {
   const nextEpisodeNumber = useEpisodeStore((s) => s.nextEpisodeNumber);
   const removeShotsByEpisode = useShotStore((s) => s.removeByEpisode);
   const shots = useShotStore((s) => s.shots);
+  const alerts = useAlertsStore((s) => s.alerts);
+  const acknowledgeAllForEpisode = useAlertsStore((s) => s.acknowledgeAll);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -91,6 +93,10 @@ const EpisodeList: React.FC = () => {
         {filteredEpisodes.map((ep) => {
           const active = ep.id === activeId;
           const shotCount = shots.filter((s) => s.episodeId === ep.id).length;
+          const epAlerts = alerts.filter(
+            (a) => a.affectedEpisodeId === ep.id && !a.acknowledged
+          );
+          const hasCritical = epAlerts.some((a) => a.severity === 'critical');
 
           return (
             <div
@@ -120,6 +126,19 @@ const EpisodeList: React.FC = () => {
                       >
                         {ep.priority}
                       </span>
+                      {epAlerts.length > 0 && (
+                        <span
+                          className={`flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[10px] ${
+                            hasCritical
+                              ? 'border-red-800 bg-red-950/40 text-red-300'
+                              : 'border-amber-800 bg-amber-950/40 text-amber-300'
+                          }`}
+                          title="前面集的改动可能影响本集，点编辑查看"
+                        >
+                          <AlertTriangle size={9} />
+                          联动 {epAlerts.length}
+                        </span>
+                      )}
                     </div>
                     <div className="mb-1 text-xs text-neutral-400">
                       {ep.mainConflict}
