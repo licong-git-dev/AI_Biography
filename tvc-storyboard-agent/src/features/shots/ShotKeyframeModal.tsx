@@ -18,6 +18,8 @@ import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
 import Spinner from '../../components/Spinner';
 import { useFocusTrap } from '../../components/useFocusTrap';
+import CommentsSection from '../../components/CommentsSection';
+import type { Comment } from '../../types';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import ShotEditModal from './ShotEditModal';
 
@@ -43,6 +45,7 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
   const setVoice = useShotStore((s) => s.setVoice);
   const setVoiceGenStatus = useShotStore((s) => s.setVoiceGenStatus);
   const setSubtitle = useShotStore((s) => s.setSubtitle);
+  const updateShot = useShotStore((s) => s.update);
   const characters = useCharacterStore((s) => s.characters);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const addStyleTemplate = useLibraryStore((s) => s.addStyle);
@@ -509,6 +512,24 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
             </pre>
           </details>
         )}
+
+        <div className="mt-4">
+          <CommentsSection
+            assignee={shot.assignee}
+            comments={shot.comments ?? []}
+            onAssigneeChange={(name) => updateShot(shot.id, { assignee: name })}
+            onAddComment={(c: Comment) =>
+              updateShot(shot.id, {
+                comments: [...(shot.comments ?? []), c],
+              })
+            }
+            onRemoveComment={(id) =>
+              updateShot(shot.id, {
+                comments: (shot.comments ?? []).filter((x) => x.id !== id),
+              })
+            }
+          />
+        </div>
       </div>
 
       <ShotEditModal

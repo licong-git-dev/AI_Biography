@@ -12,6 +12,8 @@ import PublishingPanel from '../features/publishing/PublishingPanel';
 import MetricsPanel from '../features/publishing/MetricsPanel';
 import CompliancePanel from '../features/publishing/CompliancePanel';
 import HookWorkshop from '../features/episodes/HookWorkshop';
+import CommentsSection from '../components/CommentsSection';
+import type { Comment } from '../types';
 
 type RightTab = 'context' | 'chat';
 
@@ -24,6 +26,7 @@ const RightPanel: React.FC = () => {
 
   const activeEpisodeId = useEpisodeStore((s) => s.activeId);
   const getEpisode = useEpisodeStore((s) => s.getById);
+  const updateEpisode = useEpisodeStore((s) => s.update);
   const activeEpisode = activeEpisodeId ? getEpisode(activeEpisodeId) : null;
 
   const byEpisode = useShotStore((s) => s.byEpisode);
@@ -109,6 +112,28 @@ const RightPanel: React.FC = () => {
 
                 <HookWorkshop episode={activeEpisode} />
                 <MetricsPanel episode={activeEpisode} />
+
+                <div className="mt-3">
+                  <CommentsSection
+                    assignee={activeEpisode.assignee}
+                    comments={activeEpisode.comments ?? []}
+                    onAssigneeChange={(name) =>
+                      updateEpisode(activeEpisode.id, { assignee: name })
+                    }
+                    onAddComment={(c: Comment) =>
+                      updateEpisode(activeEpisode.id, {
+                        comments: [...(activeEpisode.comments ?? []), c],
+                      })
+                    }
+                    onRemoveComment={(id) =>
+                      updateEpisode(activeEpisode.id, {
+                        comments: (activeEpisode.comments ?? []).filter(
+                          (x) => x.id !== id
+                        ),
+                      })
+                    }
+                  />
+                </div>
 
                 <div className="mt-3">
                   <div className="mb-1 text-[10px] uppercase tracking-wide text-neutral-500">

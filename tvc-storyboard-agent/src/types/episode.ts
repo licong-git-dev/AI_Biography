@@ -10,6 +10,13 @@ export type Priority = 'S' | 'A' | 'A-' | 'B';
 
 import type { EpisodeMetric, PublishingPack } from './publishing';
 
+export interface Comment {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: number;
+}
+
 export interface Episode {
   id: string;
   seasonNumber: number;
@@ -32,4 +39,8 @@ export interface Episode {
   metrics?: EpisodeMetric[];
   /** 计划发布日期（时间戳），用于发布 calendar */
   plannedReleaseAt?: number;
+  /** 指派给谁 */
+  assignee?: string;
+  /** 制作笔记 / 评论，多人协作时 @ 留言 */
+  comments?: Comment[];
 }

@@ -1,5 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, Copy, Pencil, Search, Trash2, X as XIcon } from 'lucide-react';
+import {
+  AlertTriangle,
+  Copy,
+  MessageSquare,
+  Pencil,
+  Search,
+  Trash2,
+  UserCircle,
+  X as XIcon,
+} from 'lucide-react';
 import { useAlertsStore, useEpisodeStore, useShotStore } from '../../stores';
 import type { Episode, Priority } from '../../types';
 import EpisodeEditModal from './EpisodeEditModal';
@@ -154,10 +163,22 @@ const EpisodeList: React.FC = () => {
                     <div className="mb-1 text-xs text-neutral-400">
                       {ep.mainConflict}
                     </div>
-                    <div className="text-[11px] text-neutral-500">
-                      来源：第 {ep.sourceChapters.join('、')} 章 ·{' '}
-                      {ep.targetDuration} · {ep.platformSellingPoint}
-                      {shotCount > 0 && ` · ${shotCount} 镜`}
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-neutral-500">
+                      <span>
+                        来源：第 {ep.sourceChapters.join('、')} 章 ·{' '}
+                        {ep.targetDuration} · {ep.platformSellingPoint}
+                        {shotCount > 0 && ` · ${shotCount} 镜`}
+                      </span>
+                      {ep.assignee && (
+                        <span className="flex items-center gap-0.5 text-neutral-400">
+                          <UserCircle size={9} /> {ep.assignee}
+                        </span>
+                      )}
+                      {(ep.comments?.length ?? 0) > 0 && (
+                        <span className="flex items-center gap-0.5 text-neutral-400">
+                          <MessageSquare size={9} /> {ep.comments!.length}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span className="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400">

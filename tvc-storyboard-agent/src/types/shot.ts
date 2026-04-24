@@ -63,4 +63,8 @@ export interface Shot {
   voiceSpeaker?: string;
 
   subtitleSrt?: string;
+  /** 指派给谁 */
+  assignee?: string;
+  /** 批注 / 笔记 */
+  comments?: import('./episode').Comment[];
 }

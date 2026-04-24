@@ -9,6 +9,7 @@ export type {
   EpisodeFormat,
   EpisodeStatus,
   Priority,
+  Comment,
 } from './episode';
 export type {
   Shot,
