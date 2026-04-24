@@ -47,21 +47,22 @@ export const useShotStore = create<ShotStore>()(
           shots: state.shots.map((s) => {
             if (s.id !== id) return s;
             const next: Shot = { ...s, ...patch };
-            // 关键帧影响因子改动后，标记参考图为 stale（若已生成过）
-            if (s.keyframeUrl) {
-              const changedGenField =
-                (patch.description !== undefined &&
-                  patch.description !== s.description) ||
-                (patch.shotSize !== undefined &&
-                  patch.shotSize !== s.shotSize) ||
-                (patch.cameraMove !== undefined &&
-                  patch.cameraMove !== s.cameraMove) ||
-                (patch.characters !== undefined &&
-                  JSON.stringify(patch.characters) !==
-                    JSON.stringify(s.characters));
-              if (changedGenField) {
-                next.keyframeStale = true;
-              }
+            // 关键帧影响因子改动后，标记参考图为 stale（若已生成过），
+            // 并清掉旧的 prompt（下次生成重新拼；用户显式编辑 prompt 不触发）
+            const changedGenField =
+              (patch.description !== undefined &&
+                patch.description !== s.description) ||
+              (patch.shotSize !== undefined &&
+                patch.shotSize !== s.shotSize) ||
+              (patch.cameraMove !== undefined &&
+                patch.cameraMove !== s.cameraMove) ||
+              (patch.characters !== undefined &&
+                JSON.stringify(patch.characters) !==
+                  JSON.stringify(s.characters));
+            if (changedGenField) {
+              if (s.keyframeUrl) next.keyframeStale = true;
+              // 除非本次 patch 里显式带了 prompt（用户边改字段边自己改 prompt），否则清空
+              if (patch.prompt === undefined) next.prompt = undefined;
             }
             return next;
           }),

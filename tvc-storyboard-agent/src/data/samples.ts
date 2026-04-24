@@ -123,3 +123,28 @@ export const SAMPLE_A_CLOSING_LINES = [
 ];
 
 export const SEED_SHOTS: Shot[] = [...SAMPLE_A_SHOTS];
+
+/**
+ * 把 sample-a 的镜头复制到指定 episode，返回全新 id 的 Shot 数组。
+ * 不改 store，调用方决定 addMany / 覆盖策略。
+ */
+export function cloneSampleAShotsInto(episodeId: string): Shot[] {
+  const stamp = Date.now().toString(36);
+  return SAMPLE_A_SHOTS.map((s, i) => ({
+    ...s,
+    id: `sh-${episodeId}-A-${String(i + 1).padStart(2, '0')}-${stamp}`,
+    episodeId,
+    // 重置生成状态，避免误以为"已生成"
+    keyframeUrl: undefined,
+    keyframeStale: false,
+    prompt: undefined,
+    genStatus: '未生成',
+    videoUrl: undefined,
+    videoPrompt: undefined,
+    videoGenStatus: undefined,
+    voiceUrl: undefined,
+    voiceSpeaker: undefined,
+    voiceGenStatus: undefined,
+    subtitleSrt: undefined,
+  }));
+}

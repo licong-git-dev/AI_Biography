@@ -82,24 +82,25 @@ const ChatPanel: React.FC = () => {
 
     setError(null);
 
-    const userContent =
-      attachedShots.length > 0
-        ? `${trimmed}\n\n（附带镜头：${attachedShots.map((s) => s.number).join(' / ')}）`
-        : trimmed;
+    const attachmentDataUrls = attachedShots
+      .map((s) => s.keyframeUrl)
+      .filter((u): u is string => typeof u === 'string');
+    const attachmentLabels = attachedShots.map((s) => s.number);
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
       role: 'user',
-      content: userContent,
+      content: trimmed,
       timestamp: Date.now(),
+      attachmentUrls:
+        attachmentDataUrls.length > 0 ? attachmentDataUrls : undefined,
+      attachmentLabels:
+        attachmentLabels.length > 0 ? attachmentLabels : undefined,
     };
     append(userMsg);
     setInput('');
 
     // 捕获附件后清空 picker 状态
-    const attachmentDataUrls = attachedShots
-      .map((s) => s.keyframeUrl)
-      .filter((u): u is string => typeof u === 'string');
     setAttachedShotIds([]);
     setPickerOpen(false);
 
@@ -206,6 +207,24 @@ const ChatPanel: React.FC = () => {
                   : 'bg-neutral-900 text-neutral-200'
               }`}
             >
+              {m.attachmentUrls && m.attachmentUrls.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {m.attachmentUrls.map((url, i) => (
+                    <div key={i} className="relative">
+                      <img
+                        src={url}
+                        alt={m.attachmentLabels?.[i] ?? ''}
+                        className="h-16 w-auto rounded border border-sky-700/60"
+                      />
+                      {m.attachmentLabels?.[i] && (
+                        <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 py-0.5 font-mono text-[9px] text-neutral-200">
+                          {m.attachmentLabels[i]}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="whitespace-pre-wrap">
                 {m.content || (
                   <span className="text-neutral-500 italic">思考中…</span>

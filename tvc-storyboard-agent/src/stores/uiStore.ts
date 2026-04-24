@@ -17,6 +17,11 @@ interface UIStore {
 
   onboardingDismissed: boolean;
   dismissOnboarding: () => void;
+
+  keyboardHintsOpen: boolean;
+  toggleKeyboardHints: () => void;
+  openKeyboardHints: () => void;
+  closeKeyboardHints: () => void;
 }
 
 export const useUIStore = create<UIStore>()(
@@ -34,6 +39,12 @@ export const useUIStore = create<UIStore>()(
 
       onboardingDismissed: false,
       dismissOnboarding: () => set({ onboardingDismissed: true }),
+
+      keyboardHintsOpen: false,
+      toggleKeyboardHints: () =>
+        set((s) => ({ keyboardHintsOpen: !s.keyboardHintsOpen })),
+      openKeyboardHints: () => set({ keyboardHintsOpen: true }),
+      closeKeyboardHints: () => set({ keyboardHintsOpen: false }),
     }),
     {
       name: 'licong-ui',

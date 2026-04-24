@@ -63,6 +63,7 @@ interface FormState {
   dialogue: string;
   audioNotes: string;
   genMethod: GenMethod;
+  prompt: string;
 }
 
 function toForm(s: Shot): FormState {
@@ -77,6 +78,7 @@ function toForm(s: Shot): FormState {
     dialogue: s.dialogue ?? '',
     audioNotes: s.audioNotes,
     genMethod: s.genMethod,
+    prompt: s.prompt ?? '',
   };
 }
 
@@ -93,6 +95,7 @@ function fromForm(f: FormState): Partial<Shot> {
     dialogue: f.dialogue.trim() || undefined,
     audioNotes: f.audioNotes.trim(),
     genMethod: f.genMethod,
+    prompt: f.prompt.trim() || undefined,
   };
 }
 
@@ -299,6 +302,16 @@ const ShotEditModal: React.FC<Props> = ({ shotId, open, onClose }) => {
                 </option>
               ))}
             </select>
+          </Field>
+
+          <Field label="图像生成提示词（AI 自动填；可手动微调后重生）">
+            <textarea
+              value={form.prompt}
+              onChange={(e) => patch('prompt', e.target.value)}
+              rows={6}
+              placeholder="通常由 AI 基于镜头信息 + 角色基线自动拼出；手动编辑会覆盖自动生成内容。"
+              className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 font-mono text-[11px] leading-relaxed text-neutral-200 focus:border-neutral-500 focus:outline-none"
+            />
           </Field>
         </div>
 

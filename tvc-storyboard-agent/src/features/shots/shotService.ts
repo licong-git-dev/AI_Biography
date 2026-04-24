@@ -67,7 +67,10 @@ export async function generateShotKeyframe(
   characters: Character[]
 ): Promise<{ url: string; prompt: string }> {
   const ai = getGeminiClient();
-  const prompt = buildShotPrompt(shot, characters);
+  // 用户手动编辑过的 prompt 优先；否则根据当前字段自动拼
+  const prompt = shot.prompt && shot.prompt.trim()
+    ? shot.prompt
+    : buildShotPrompt(shot, characters);
 
   const refImageUrls = characters
     .filter((c) => shot.characters.includes(c.id))

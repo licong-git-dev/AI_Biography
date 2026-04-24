@@ -16,6 +16,8 @@ import { generateKeyframesForShots } from './shotService';
 import { generateVoiceForShots, extractSpeechText } from '../audio/voiceService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import ShotKeyframeModal from './ShotKeyframeModal';
+import { cloneSampleAShotsInto, SAMPLE_A_NARRATION } from '../../data/samples';
+import { toast } from '../../stores/toastStore';
 
 const STATUS_COLOR: Record<ShotGenStatus, string> = {
   未生成: 'bg-neutral-800 text-neutral-500',
@@ -129,6 +131,25 @@ const ShotTable: React.FC = () => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleImportSampleA = () => {
+    if (!activeEpisode) return;
+    const existingCount = filteredShots.length;
+    if (
+      existingCount > 0 &&
+      !confirm(
+        `本集已有 ${existingCount} 个镜头。导入 sample-a 的 9 个镜头将追加到后面（不会删除现有）。继续？`
+      )
+    ) {
+      return;
+    }
+    const fresh = cloneSampleAShotsInto(activeEpisode.id);
+    addMany(fresh);
+    toast.success(
+      `已导入 sample-a 的 ${fresh.length} 个镜头（旁白：${SAMPLE_A_NARRATION.slice(0, 18)}…）`,
+      5000
+    );
   };
 
   const handleSaveProposals = () => {
@@ -433,6 +454,17 @@ const ShotTable: React.FC = () => {
               type="button"
             >
               {generating ? '生成中…（15-30 秒）' : 'AI 生成镜头表'}
+            </button>
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-neutral-500">
+            <span>或</span>
+            <button
+              onClick={handleImportSampleA}
+              className="rounded border border-neutral-700 px-2 py-1 text-neutral-300 hover:border-neutral-600 hover:text-neutral-100"
+              type="button"
+              title="用 samples/sample-a 的 9 个镜头模板填充本集"
+            >
+              从 sample-a 模板导入
             </button>
           </div>
           {error && (

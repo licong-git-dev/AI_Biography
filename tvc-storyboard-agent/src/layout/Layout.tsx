@@ -6,8 +6,14 @@ import RightPanel from './RightPanel';
 import ApiKeyModal from '../components/ApiKeyModal';
 import OnboardingBanner from '../components/OnboardingBanner';
 import ToastContainer from '../components/ToastContainer';
+import KeyboardHintsModal from '../components/KeyboardHintsModal';
+import { useQuestionMarkKey } from '../components/useQuestionMarkKey';
+import { useUIStore } from '../stores';
 
 const Layout: React.FC = () => {
+  const toggleKeyboardHints = useUIStore((s) => s.toggleKeyboardHints);
+  useQuestionMarkKey(toggleKeyboardHints);
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-neutral-950 text-neutral-100">
       <Header />
@@ -24,6 +30,7 @@ const Layout: React.FC = () => {
         </aside>
       </div>
       <ApiKeyModal />
+      <KeyboardHintsModal />
       <ToastContainer />
     </div>
   );

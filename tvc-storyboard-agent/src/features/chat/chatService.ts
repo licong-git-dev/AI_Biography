@@ -7,6 +7,10 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  /** 用户在这条消息里附带的关键帧 data URL（仅 user role） */
+  attachmentUrls?: string[];
+  /** 附件对应的镜号，便于 UI 显示 */
+  attachmentLabels?: string[];
 }
 
 export interface ChatContext {
