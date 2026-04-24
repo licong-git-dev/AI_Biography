@@ -1,5 +1,7 @@
 import type { Shot } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
+import { raceAbort } from '../../services/abort';
+import { recordCall } from '../../stores/statsStore';
 
 /**
  * Gemini TTS：把文本转成 base64 音频 data URL。
@@ -8,24 +10,29 @@ import { getGeminiClient, MODELS } from '../../services/geminiClient';
  */
 export async function generateSpeech(
   text: string,
-  speaker: string = 'Kore'
+  speaker: string = 'Kore',
+  signal?: AbortSignal
 ): Promise<string> {
   if (!text.trim()) throw new Error('待合成的文本为空。');
   const ai = getGeminiClient();
 
-  const response = await ai.models.generateContent({
-    model: MODELS.TTS,
-    contents: [{ role: 'user', parts: [{ text }] }],
-    config: {
-      // @ts-expect-error - responseModalities / speechConfig 可能未在 SDK 类型里
-      responseModalities: ['AUDIO'],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: speaker },
+  recordCall('tts');
+  const response = await raceAbort(
+    ai.models.generateContent({
+      model: MODELS.TTS,
+      contents: [{ role: 'user', parts: [{ text }] }],
+      config: {
+        // @ts-expect-error - responseModalities / speechConfig 可能未在 SDK 类型里
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: speaker },
+          },
         },
-      },
-    } as Record<string, unknown>,
-  });
+      } as Record<string, unknown>,
+    }),
+    signal
+  );
 
   const r = response as {
     candidates?: Array<{
@@ -116,31 +123,38 @@ export async function generateVoiceForShots(params: {
  * 字幕转写：把音频 data URL 喂给 Gemini，让它写出带时间戳的字幕。
  * 返回原始文本（用户可再转 srt/ass）。
  */
-export async function transcribeAudio(audioDataUrl: string): Promise<string> {
+export async function transcribeAudio(
+  audioDataUrl: string,
+  signal?: AbortSignal
+): Promise<string> {
   const m = audioDataUrl.match(/^data:(.*?);base64,(.+)$/);
   if (!m) throw new Error('音频 data URL 格式异常。');
 
   const ai = getGeminiClient();
 
-  const response = await ai.models.generateContent({
-    model: MODELS.STT,
-    contents: [
-      {
-        role: 'user',
-        parts: [
-          {
-            inlineData: {
-              mimeType: m[1] ?? 'audio/wav',
-              data: m[2]!,
+  recordCall('stt');
+  const response = await raceAbort(
+    ai.models.generateContent({
+      model: MODELS.STT,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: m[1] ?? 'audio/wav',
+                data: m[2]!,
+              },
             },
-          },
-          {
-            text: '请把这段音频转写为带时间戳的字幕。使用 SRT 格式：\n1\n00:00:00,000 --> 00:00:03,000\n字幕内容\n\n2\n...\n\n只返回 SRT 字幕内容，不要解释。中文输出。',
-          },
-        ],
-      },
-    ],
-  });
+            {
+              text: '请把这段音频转写为带时间戳的字幕。使用 SRT 格式：\n1\n00:00:00,000 --> 00:00:03,000\n字幕内容\n\n2\n...\n\n只返回 SRT 字幕内容，不要解释。中文输出。',
+            },
+          ],
+        },
+      ],
+    }),
+    signal
+  );
 
   return response.text ?? '';
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Download, Pencil } from 'lucide-react';
 import { useCharacterStore, useShotStore, useUIStore } from '../../stores';
 import { generateShotKeyframe } from './shotService';
@@ -9,7 +9,9 @@ import {
   transcribeAudio,
 } from '../audio/voiceService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import { isAbortError } from '../../services/abort';
 import Spinner from '../../components/Spinner';
+import { useFocusTrap } from '../../components/useFocusTrap';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import ShotEditModal from './ShotEditModal';
 
@@ -46,8 +48,18 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
   const [speaker, setSpeaker] = useState('Kore');
   const [editOpen, setEditOpen] = useState(false);
 
+  const imgAbortRef = useRef<AbortController | null>(null);
+  const vidAbortRef = useRef<AbortController | null>(null);
+  const voiceAbortRef = useRef<AbortController | null>(null);
+  const srtAbortRef = useRef<AbortController | null>(null);
+
   // 只在内层 ShotEditModal 未开时响应 Esc，避免同时关两层
   useEscapeKey(Boolean(shotId) && Boolean(shot) && !editOpen, onClose);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(
+    Boolean(shotId) && Boolean(shot) && !editOpen,
+    containerRef
+  );
 
   if (!shotId || !shot) return null;
 
@@ -59,15 +71,27 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     setError(null);
     setGeneratingImage(true);
     setGenStatus(shot.id, '生成中');
+    const controller = new AbortController();
+    imgAbortRef.current = controller;
     try {
-      const { url, prompt } = await generateShotKeyframe(shot, characters);
+      const { url, prompt } = await generateShotKeyframe(
+        shot,
+        characters,
+        controller.signal
+      );
       setKeyframe(shot.id, url);
       setPrompt(shot.id, prompt);
     } catch (e) {
-      setGenStatus(shot.id, '失败');
-      handleError(e);
+      if (isAbortError(e)) {
+        setGenStatus(shot.id, shot.keyframeUrl ? '已生成' : '未生成');
+        setError('关键帧生成已取消');
+      } else {
+        setGenStatus(shot.id, '失败');
+        handleError(e);
+      }
     } finally {
       setGeneratingImage(false);
+      imgAbortRef.current = null;
     }
   };
 
@@ -76,14 +100,22 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     setError(null);
     setGeneratingVideo(true);
     setVideoGenStatus(shot.id, '生成中');
+    const controller = new AbortController();
+    vidAbortRef.current = controller;
     try {
-      const { url, prompt } = await generateShotVideo(shot);
+      const { url, prompt } = await generateShotVideo(shot, controller.signal);
       setVideo(shot.id, url, prompt);
     } catch (e) {
-      setVideoGenStatus(shot.id, '失败');
-      handleError(e);
+      if (isAbortError(e)) {
+        setVideoGenStatus(shot.id, shot.videoUrl ? '已生成' : '未生成');
+        setError('视频生成已取消');
+      } else {
+        setVideoGenStatus(shot.id, '失败');
+        handleError(e);
+      }
     } finally {
       setGeneratingVideo(false);
+      vidAbortRef.current = null;
     }
   };
 
@@ -92,14 +124,22 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     setError(null);
     setGeneratingVoice(true);
     setVoiceGenStatus(shot.id, '生成中');
+    const controller = new AbortController();
+    voiceAbortRef.current = controller;
     try {
-      const url = await generateSpeech(speechText, speaker);
+      const url = await generateSpeech(speechText, speaker, controller.signal);
       setVoice(shot.id, url, speaker);
     } catch (e) {
-      setVoiceGenStatus(shot.id, '失败');
-      handleError(e);
+      if (isAbortError(e)) {
+        setVoiceGenStatus(shot.id, shot.voiceUrl ? '已生成' : '未生成');
+        setError('配音合成已取消');
+      } else {
+        setVoiceGenStatus(shot.id, '失败');
+        handleError(e);
+      }
     } finally {
       setGeneratingVoice(false);
+      voiceAbortRef.current = null;
     }
   };
 
@@ -107,15 +147,24 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     if (!shot.voiceUrl) return;
     setError(null);
     setGeneratingSrt(true);
+    const controller = new AbortController();
+    srtAbortRef.current = controller;
     try {
-      const srt = await transcribeAudio(shot.voiceUrl);
+      const srt = await transcribeAudio(shot.voiceUrl, controller.signal);
       setSubtitle(shot.id, srt);
     } catch (e) {
-      handleError(e);
+      if (isAbortError(e)) setError('字幕转写已取消');
+      else handleError(e);
     } finally {
       setGeneratingSrt(false);
+      srtAbortRef.current = null;
     }
   };
+
+  const cancelImg = () => imgAbortRef.current?.abort();
+  const cancelVid = () => vidAbortRef.current?.abort();
+  const cancelVoice = () => voiceAbortRef.current?.abort();
+  const cancelSrt = () => srtAbortRef.current?.abort();
 
   const handleDownloadSrt = () => {
     if (!shot.subtitleSrt) return;
@@ -148,6 +197,7 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
       onClick={onClose}
     >
       <div
+        ref={containerRef}
         className="scrollbar-thin max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-950 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -236,7 +286,16 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
             </div>
           )}
 
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex justify-end gap-2">
+            {generatingImage && (
+              <button
+                onClick={cancelImg}
+                className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:border-red-700"
+                type="button"
+              >
+                取消
+              </button>
+            )}
             <button
               onClick={handleGenerateImage}
               disabled={anyRunning}
@@ -274,7 +333,16 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
             />
           )}
 
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex justify-end gap-2">
+            {generatingVideo && (
+              <button
+                onClick={cancelVid}
+                className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:border-red-700"
+                type="button"
+              >
+                取消
+              </button>
+            )}
             <button
               onClick={handleGenerateVideo}
               disabled={anyRunning || !shot.keyframeUrl}
@@ -329,6 +397,15 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
                   </option>
                 ))}
               </select>
+              {generatingVoice && (
+                <button
+                  onClick={cancelVoice}
+                  className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:border-red-700"
+                  type="button"
+                >
+                  取消
+                </button>
+              )}
               <button
                 onClick={handleGenerateVoice}
                 disabled={anyRunning}
@@ -360,6 +437,15 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
                       type="button"
                     >
                       <Download size={10} /> 下载 .srt
+                    </button>
+                  )}
+                  {generatingSrt && (
+                    <button
+                      onClick={cancelSrt}
+                      className="rounded border border-red-800 bg-red-950/30 px-2 py-0.5 text-[10px] text-red-300 hover:border-red-700"
+                      type="button"
+                    >
+                      取消
                     </button>
                   )}
                   <button

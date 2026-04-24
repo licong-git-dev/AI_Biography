@@ -4,6 +4,8 @@ import {
   getGeminiClient,
   MODELS,
 } from '../../services/geminiClient';
+import { raceAbort } from '../../services/abort';
+import { recordCall } from '../../stores/statsStore';
 
 function buildShotPrompt(shot: Shot, characters: Character[]): string {
   const baselines = characters
@@ -64,7 +66,8 @@ function extractInlineParts(refImageUrls: string[]): InlinePart[] {
 
 export async function generateShotKeyframe(
   shot: Shot,
-  characters: Character[]
+  characters: Character[],
+  signal?: AbortSignal
 ): Promise<{ url: string; prompt: string }> {
   const ai = getGeminiClient();
   // 用户手动编辑过的 prompt 优先；否则根据当前字段自动拼
@@ -82,16 +85,20 @@ export async function generateShotKeyframe(
     { text: prompt },
   ];
 
-  const response = await ai.models.generateContent({
-    model: MODELS.IMAGE,
-    contents: [{ role: 'user', parts }],
-    config: {
-      imageConfig: {
-        aspectRatio: '9:16',
-        imageSize: '1K',
+  recordCall('image');
+  const response = await raceAbort(
+    ai.models.generateContent({
+      model: MODELS.IMAGE,
+      contents: [{ role: 'user', parts }],
+      config: {
+        imageConfig: {
+          aspectRatio: '9:16',
+          imageSize: '1K',
+        },
       },
-    },
-  });
+    }),
+    signal
+  );
 
   const url = extractImageDataUrl(response);
   if (!url) {
@@ -129,10 +136,17 @@ export async function generateKeyframesForShots(params: {
     }
     onStart(shot.id);
     try {
-      const { url, prompt } = await generateShotKeyframe(shot, characters);
+      const { url, prompt } = await generateShotKeyframe(
+        shot,
+        characters,
+        signal
+      );
       onSuccess(shot.id, url, prompt);
       successCount++;
     } catch (e) {
+      if (signal?.aborted) {
+        return { successCount, failCount, aborted: true };
+      }
       const msg = e instanceof Error ? e.message : String(e);
       onFailure(shot.id, msg);
       failCount++;

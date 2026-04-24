@@ -5,3 +5,5 @@ export { useShotStore } from './shotStore';
 export { useUIStore } from './uiStore';
 export type { CenterTab } from './uiStore';
 export { useChatStore } from './chatStore';
+export { useStatsStore } from './statsStore';
+export type { AICallKind } from './statsStore';

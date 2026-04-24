@@ -1,5 +1,6 @@
 import type { Shot } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
+import { recordCall } from '../../stores/statsStore';
 
 /**
  * 用 Veo 3 做图生视频。参数名和 API 形状可能随 @google/genai 版本变化，
@@ -28,6 +29,7 @@ export async function generateShotVideo(
     );
   }
 
+  recordCall('video');
   // @ts-expect-error - 运行时调用
   let operation = await ai.models.generateVideos({
     model: MODELS.VIDEO,

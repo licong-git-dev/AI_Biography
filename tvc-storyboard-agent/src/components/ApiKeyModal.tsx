@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getApiKey, setApiKey } from '../services/apiKey';
 import { useUIStore } from '../stores';
 import { useEscapeKey } from './useEscapeKey';
 import { useModalSave } from './useModalSave';
+import { useFocusTrap } from './useFocusTrap';
 
 const ApiKeyModal: React.FC = () => {
   const open = useUIStore((s) => s.apiKeyModalOpen);
@@ -25,8 +26,10 @@ const ApiKeyModal: React.FC = () => {
     close();
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
   useEscapeKey(open, close);
   useModalSave(open, save);
+  useFocusTrap(open, containerRef);
 
   if (!open) return null;
 
@@ -42,6 +45,7 @@ const ApiKeyModal: React.FC = () => {
       onClick={close}
     >
       <div
+        ref={containerRef}
         className="w-full max-w-md rounded-lg border border-neutral-800 bg-neutral-950 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >

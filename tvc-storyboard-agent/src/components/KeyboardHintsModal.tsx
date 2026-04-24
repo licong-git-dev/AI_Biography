@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Keyboard, X } from 'lucide-react';
 import { useUIStore } from '../stores';
 import { useEscapeKey } from './useEscapeKey';
+import { useFocusTrap } from './useFocusTrap';
 
 interface Shortcut {
   keys: string[];
@@ -55,7 +56,9 @@ const KeyboardHintsModal: React.FC = () => {
   const open = useUIStore((s) => s.keyboardHintsOpen);
   const close = useUIStore((s) => s.closeKeyboardHints);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   useEscapeKey(open, close);
+  useFocusTrap(open, containerRef);
 
   if (!open) return null;
 
@@ -65,6 +68,7 @@ const KeyboardHintsModal: React.FC = () => {
       onClick={close}
     >
       <div
+        ref={containerRef}
         className="scrollbar-thin max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-950 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >

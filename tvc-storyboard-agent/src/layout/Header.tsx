@@ -2,6 +2,7 @@ import React from 'react';
 import { Keyboard } from 'lucide-react';
 import { useUIStore } from '../stores';
 import StorageIndicator from '../components/StorageIndicator';
+import StatsIndicator from '../components/StatsIndicator';
 import BackupButton from '../features/backup/BackupButton';
 
 const Header: React.FC = () => {
@@ -19,6 +20,7 @@ const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        <StatsIndicator />
         <StorageIndicator />
         <BackupButton />
         <button

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Episode, EpisodeFormat, EpisodeStatus, Priority } from '../../types';
 import { useEpisodeStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useModalSave } from '../../components/useModalSave';
+import { useFocusTrap } from '../../components/useFocusTrap';
 
 interface Props {
   episodeId: string | null;
@@ -85,8 +86,10 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
     onClose();
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
   useEscapeKey(open, onClose);
   useModalSave(open && !!form, save);
+  useFocusTrap(open, containerRef);
 
   if (!open || !episode || !form) return null;
 
@@ -99,6 +102,7 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
       onClick={onClose}
     >
       <div
+        ref={containerRef}
         className="scrollbar-thin max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-950 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >

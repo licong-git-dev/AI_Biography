@@ -3,6 +3,8 @@ import { PLATFORMS } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
 import { SYSTEM_PROMPT_CORE } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
+import { recordCall } from '../../stores/statsStore';
+import { validatePublishingPlatforms } from '../../services/validate';
 
 const PLATFORM_RULES = `
 【各平台文案风格】
@@ -54,6 +56,7 @@ export async function generatePublishingPack(
   episode: Episode
 ): Promise<PublishingPack> {
   const ai = getGeminiClient();
+  recordCall('text');
   const response = await ai.models.generateContent({
     model: MODELS.TEXT,
     contents: buildPrompt(episode),
@@ -66,7 +69,7 @@ export async function generatePublishingPack(
   const text = response.text ?? '';
   if (!text) throw new Error('Gemini 返回为空。');
 
-  let parsed: { platforms?: PlatformCopy[] };
+  let parsed: unknown;
   try {
     parsed = JSON.parse(cleanJson(text));
   } catch (e) {
@@ -75,10 +78,7 @@ export async function generatePublishingPack(
     );
   }
 
-  const platforms = parsed.platforms;
-  if (!Array.isArray(platforms) || platforms.length === 0) {
-    throw new Error('返回里没有 platforms 数组。');
-  }
+  const platforms = validatePublishingPlatforms(parsed);
 
   return {
     episodeId: episode.id,

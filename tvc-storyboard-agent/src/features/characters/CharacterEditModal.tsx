@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { AgeStage, Character, CharacterGroup } from '../../types';
 import { useCharacterStore } from '../../stores';
+import { useFocusTrap } from '../../components/useFocusTrap';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useModalSave } from '../../components/useModalSave';
 
@@ -95,8 +96,10 @@ const CharacterEditModal: React.FC<Props> = ({ characterId, open, onClose }) => 
     onClose();
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
   useEscapeKey(open, onClose);
   useModalSave(open && !!form, save);
+  useFocusTrap(open, containerRef);
 
   if (!open || !character || !form) return null;
 
@@ -109,6 +112,7 @@ const CharacterEditModal: React.FC<Props> = ({ characterId, open, onClose }) => 
       onClick={onClose}
     >
       <div
+        ref={containerRef}
         className="scrollbar-thin max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-950 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >

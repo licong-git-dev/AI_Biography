@@ -8,6 +8,8 @@ import type {
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
 import { composeSystemPrompt } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
+import { recordCall } from '../../stores/statsStore';
+import { validateShotProposals } from '../../services/validate';
 
 export interface GeneratedShot {
   number: string;
@@ -131,6 +133,7 @@ export async function generateShotsForEpisode(params: {
   const ai = getGeminiClient();
   const prompt = buildPrompt(episode, characters, chapterExcerpt, targetCount);
 
+  recordCall('text');
   const response = await ai.models.generateContent({
     model: MODELS.TEXT,
     contents: prompt,
@@ -143,7 +146,7 @@ export async function generateShotsForEpisode(params: {
   const text = response.text ?? '';
   if (!text) throw new Error('Gemini 返回为空，可能被安全策略拦截。');
 
-  let parsed: { shots?: GeneratedShot[] };
+  let parsed: unknown;
   try {
     parsed = JSON.parse(cleanJson(text));
   } catch (e) {
@@ -152,10 +155,5 @@ export async function generateShotsForEpisode(params: {
     );
   }
 
-  const shots = parsed.shots;
-  if (!Array.isArray(shots) || shots.length === 0) {
-    throw new Error('返回里没有 shots 数组。');
-  }
-
-  return shots;
+  return validateShotProposals(parsed);
 }

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Copy } from 'lucide-react';
 import type { Character } from '../../types';
 import { useCharacterStore, useUIStore } from '../../stores';
 import { generateCharacterReference } from './characterService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import { isAbortError } from '../../services/abort';
 import { toast } from '../../stores/toastStore';
 
 interface Props {
@@ -32,16 +33,21 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
 
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleGenerate = async () => {
     setError(null);
     setGenerating(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      const url = await generateCharacterReference(character);
+      const url = await generateCharacterReference(character, controller.signal);
       setReferenceImage(character.id, url);
       toast.success(`${character.name}：参考图已生成`);
     } catch (e) {
-      if (e instanceof ApiKeyMissingError) {
+      if (isAbortError(e)) {
+        setError('已取消');
+      } else if (e instanceof ApiKeyMissingError) {
         setError(e.message);
         openApiKey();
       } else {
@@ -50,8 +56,11 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
       }
     } finally {
       setGenerating(false);
+      abortRef.current = null;
     }
   };
+
+  const handleCancel = () => abortRef.current?.abort();
 
   return (
     <div className="space-y-4">
@@ -132,26 +141,48 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
               alt={character.name}
               className="w-full rounded border border-neutral-800"
             />
+            <div className="flex gap-2">
+              <button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="flex-1 rounded border border-neutral-800 py-1.5 text-[11px] text-neutral-300 hover:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+              >
+                {generating ? '生成中…（约 20-40 秒）' : '重新生成'}
+              </button>
+              {generating && (
+                <button
+                  onClick={handleCancel}
+                  className="rounded border border-red-800 bg-red-950/30 px-2 text-[11px] text-red-300 hover:border-red-700"
+                  type="button"
+                >
+                  取消
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="w-full rounded border border-neutral-800 py-1.5 text-[11px] text-neutral-300 hover:border-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded border border-sky-800 bg-sky-900/30 py-2 text-xs font-medium text-sky-200 hover:border-sky-700 hover:bg-sky-900/50 disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
-              {generating ? '生成中…（约 20-40 秒）' : '重新生成'}
+              {generating
+                ? '生成中…（约 20-40 秒）'
+                : '生成 6 视图参考图（Nano Banana Pro）'}
             </button>
+            {generating && (
+              <button
+                onClick={handleCancel}
+                className="rounded border border-red-800 bg-red-950/30 px-3 text-xs text-red-300 hover:border-red-700"
+                type="button"
+              >
+                取消
+              </button>
+            )}
           </div>
-        ) : (
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="w-full rounded border border-sky-800 bg-sky-900/30 py-2 text-xs font-medium text-sky-200 hover:border-sky-700 hover:bg-sky-900/50 disabled:cursor-not-allowed disabled:opacity-50"
-            type="button"
-          >
-            {generating
-              ? '生成中…（约 20-40 秒）'
-              : '生成 6 视图参考图（Nano Banana Pro）'}
-          </button>
         )}
 
         {error && (

@@ -2,6 +2,8 @@ import type { Chapter, Priority, EpisodeFormat } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
 import { composeSystemPrompt } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
+import { recordCall } from '../../stores/statsStore';
+import { validateEpisodeProposals } from '../../services/validate';
 
 export interface GeneratedEpisode {
   title: string;
@@ -68,6 +70,7 @@ export async function splitChapterIntoEpisodes(
   const ai = getGeminiClient();
   const prompt = buildPrompt(chapter, targetCount);
 
+  recordCall('text');
   const response = await ai.models.generateContent({
     model: MODELS.TEXT,
     contents: prompt,
@@ -82,7 +85,7 @@ export async function splitChapterIntoEpisodes(
     throw new Error('Gemini 返回为空，可能被安全策略拦截。');
   }
 
-  let parsed: { episodes?: GeneratedEpisode[] };
+  let parsed: unknown;
   try {
     parsed = JSON.parse(cleanJson(text));
   } catch (e) {
@@ -91,10 +94,5 @@ export async function splitChapterIntoEpisodes(
     );
   }
 
-  const episodes = parsed.episodes;
-  if (!Array.isArray(episodes) || episodes.length === 0) {
-    throw new Error('返回里没有 episodes 数组。');
-  }
-
-  return episodes;
+  return validateEpisodeProposals(parsed);
 }

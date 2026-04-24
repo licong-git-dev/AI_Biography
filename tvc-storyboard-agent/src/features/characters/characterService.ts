@@ -1,5 +1,7 @@
 import type { Character } from '../../types';
 import { extractImageDataUrl, getGeminiClient, MODELS } from '../../services/geminiClient';
+import { raceAbort } from '../../services/abort';
+import { recordCall } from '../../stores/statsStore';
 
 function buildReferencePrompt(character: Character): string {
   const appearanceBlock = character.appearance.map((a) => `- ${a}`).join('\n');
@@ -40,21 +42,26 @@ ${character.promptBaseline}
 }
 
 export async function generateCharacterReference(
-  character: Character
+  character: Character,
+  signal?: AbortSignal
 ): Promise<string> {
   const ai = getGeminiClient();
   const prompt = buildReferencePrompt(character);
 
-  const response = await ai.models.generateContent({
-    model: MODELS.IMAGE,
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      imageConfig: {
-        aspectRatio: '21:9',
-        imageSize: '1K',
+  recordCall('image');
+  const response = await raceAbort(
+    ai.models.generateContent({
+      model: MODELS.IMAGE,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        imageConfig: {
+          aspectRatio: '21:9',
+          imageSize: '1K',
+        },
       },
-    },
-  });
+    }),
+    signal
+  );
 
   const url = extractImageDataUrl(response);
   if (!url) {

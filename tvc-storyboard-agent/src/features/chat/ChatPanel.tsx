@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { Image as ImageIcon, Square, X } from 'lucide-react';
 import {
   useCharacterStore,
   useChapterStore,
@@ -11,6 +11,7 @@ import {
 import type { ChatMessage } from './chatService';
 import { streamChatReply } from './chatService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import { isAbortError } from '../../services/abort';
 import Spinner from '../../components/Spinner';
 
 const ChatPanel: React.FC = () => {
@@ -36,6 +37,7 @@ const ChatPanel: React.FC = () => {
   const [attachedShotIds, setAttachedShotIds] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // 自动滚到底部
   useEffect(() => {
@@ -113,6 +115,9 @@ const ChatPanel: React.FC = () => {
     append(assistantMsg);
     setStreaming(true);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const historyForAI = useChatStore.getState().messages.slice(0, -2); // 不含刚 append 的 user + 空 assistant
       const stream = streamChatReply({
@@ -120,25 +125,37 @@ const ChatPanel: React.FC = () => {
         userInput: trimmed,
         context: buildContext(),
         attachmentDataUrls,
+        signal: controller.signal,
       });
       for await (const chunk of stream) {
         appendToLast(chunk);
       }
     } catch (e) {
-      if (e instanceof ApiKeyMissingError) {
+      if (isAbortError(e)) {
+        if (useChatStore.getState().messages.slice(-1)[0]?.content === '') {
+          appendToLast('（用户已停止生成）');
+        } else {
+          appendToLast('\n\n（已停止）');
+        }
+      } else if (e instanceof ApiKeyMissingError) {
         setError(e.message);
         openApiKey();
+        if (useChatStore.getState().messages.slice(-1)[0]?.content === '') {
+          appendToLast('（生成失败，请重试）');
+        }
       } else {
         setError(e instanceof Error ? e.message : String(e));
-      }
-      // 把最后那条空 assistant 填成错误占位
-      if (useChatStore.getState().messages.slice(-1)[0]?.content === '') {
-        appendToLast('（生成失败，请重试）');
+        if (useChatStore.getState().messages.slice(-1)[0]?.content === '') {
+          appendToLast('（生成失败，请重试）');
+        }
       }
     } finally {
       setStreaming(false);
+      abortRef.current = null;
     }
   };
+
+  const handleStopStream = () => abortRef.current?.abort();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -340,15 +357,24 @@ const ChatPanel: React.FC = () => {
           >
             清空对话
           </button>
-          <button
-            onClick={handleSend}
-            disabled={streaming || !input.trim()}
-            className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
-            type="button"
-          >
-            {streaming && <Spinner size={11} />}
-            {streaming ? '生成中' : '发送'}
-          </button>
+          {streaming ? (
+            <button
+              onClick={handleStopStream}
+              className="flex items-center gap-1 rounded border border-red-800 bg-red-950/40 px-3 py-1 text-[11px] font-medium text-red-200 hover:border-red-700"
+              type="button"
+            >
+              <Square size={10} /> 停止
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+            >
+              发送
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import type { Character, Chapter, Episode, Shot } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
 import { SYSTEM_PROMPT_CORE } from '../../services/systemPrompt';
+import { recordCall } from '../../stores/statsStore';
 
 export interface ChatMessage {
   id: string;
@@ -80,8 +81,15 @@ export async function* streamChatReply(params: {
   userInput: string;
   context: ChatContext;
   attachmentDataUrls?: string[];
+  signal?: AbortSignal;
 }): AsyncGenerator<string, void, unknown> {
-  const { messages, userInput, context, attachmentDataUrls = [] } = params;
+  const {
+    messages,
+    userInput,
+    context,
+    attachmentDataUrls = [],
+    signal,
+  } = params;
   const ai = getGeminiClient();
 
   const history: Array<{ role: 'user' | 'model'; parts: Part[] }> =
@@ -105,6 +113,9 @@ export async function* streamChatReply(params: {
       ? `\n\n[当前会话上下文 — 用户可能正在询问这些对象]\n${contextBlock}`
       : '');
 
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+
+  recordCall('chat-stream');
   const stream = await ai.models.generateContentStream({
     model: MODELS.TEXT,
     contents: history,
@@ -114,6 +125,7 @@ export async function* streamChatReply(params: {
   });
 
   for await (const chunk of stream) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     if (chunk.text) {
       yield chunk.text;
     }
