@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Check, Circle } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Check, Circle, ImagePlus } from 'lucide-react';
 import type { Episode, Platform } from '../../types';
 import { PLATFORMS } from '../../types';
 import {
@@ -10,7 +10,10 @@ import {
 } from '../../stores';
 import { generatePublishingPack } from './publishingService';
 import { exportEpisodeZip, downloadBlob } from './exportService';
+import { generateCoverImage } from './coverService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import { isAbortError } from '../../services/abort';
+import { toast } from '../../stores/toastStore';
 import Spinner from '../../components/Spinner';
 
 interface Props {
@@ -208,6 +211,14 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
             value={currentCopy.coverText}
             onCopy={handleCopy}
           />
+
+          <CoverImageRow
+            episode={episode}
+            platform={activePlatform}
+            coverText={currentCopy.coverText}
+            coverImageUrl={currentCopy.coverImageUrl}
+          />
+
           {currentCopy.pinnedComment && (
             <CopyField
               label="置顶评论"
@@ -261,6 +272,95 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
           {generating ? '生成中…' : pack ? '重新生成文案' : '生成平台文案'}
         </button>
       </div>
+    </div>
+  );
+};
+
+const CoverImageRow: React.FC<{
+  episode: Episode;
+  platform: Platform;
+  coverText: string;
+  coverImageUrl?: string;
+}> = ({ episode, platform, coverText, coverImageUrl }) => {
+  const shots = useShotStore((s) => s.byEpisode(episode.id));
+  const characters = useCharacterStore((s) => s.characters);
+  const setCoverImage = useEpisodeStore((s) => s.setCoverImage);
+  const openApiKey = useUIStore((s) => s.openApiKeyModal);
+
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const handleGen = async () => {
+    setErr(null);
+    setBusy(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const url = await generateCoverImage({
+        episode,
+        coverText,
+        platform,
+        shots,
+        characters,
+        aspect: platform === '小红书' ? '3:4' : '9:16',
+        signal: controller.signal,
+      });
+      setCoverImage(episode.id, platform, url);
+      toast.success(`${platform} 封面图已生成`);
+    } catch (e) {
+      if (isAbortError(e)) setErr('已取消');
+      else if (e instanceof ApiKeyMissingError) {
+        setErr(e.message);
+        openApiKey();
+      } else setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+      abortRef.current = null;
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-[11px] text-neutral-500">封面图</span>
+        <div className="flex gap-1">
+          {busy && (
+            <button
+              onClick={() => abortRef.current?.abort()}
+              className="rounded border border-red-800 bg-red-950/30 px-1.5 py-0.5 text-[10px] text-red-300 hover:border-red-700"
+              type="button"
+            >
+              取消
+            </button>
+          )}
+          <button
+            onClick={handleGen}
+            disabled={busy || !coverText.trim()}
+            className="flex items-center gap-1 rounded bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-100 hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+            type="button"
+          >
+            {busy ? <Spinner size={9} /> : <ImagePlus size={9} />}
+            {busy ? '生成中…' : coverImageUrl ? '重新生成' : '生成封面图'}
+          </button>
+        </div>
+      </div>
+      {coverImageUrl ? (
+        <img
+          src={coverImageUrl}
+          alt="封面图"
+          className="w-full rounded border border-neutral-800"
+        />
+      ) : (
+        <div className="rounded border border-dashed border-neutral-800 bg-neutral-900/30 p-3 text-center text-[10px] text-neutral-500">
+          暂无封面图。Nano Banana Pro · 约 20-40 秒
+        </div>
+      )}
+      {err && (
+        <div className="mt-1 rounded border border-red-900/50 bg-red-950/30 p-1 text-[10px] text-red-300">
+          {err}
+        </div>
+      )}
     </div>
   );
 };

@@ -13,6 +13,11 @@ interface EpisodeStore {
   update: (id: string, patch: Partial<Episode>) => void;
   remove: (id: string) => void;
   setStatus: (id: string, status: EpisodeStatus) => void;
+  setCoverImage: (
+    episodeId: string,
+    platform: string,
+    url: string
+  ) => void;
   addShotId: (episodeId: string, shotId: string) => void;
   removeShotId: (episodeId: string, shotId: string) => void;
   resetToSeed: () => void;
@@ -53,6 +58,24 @@ export const useEpisodeStore = create<EpisodeStore>()(
           episodes: state.episodes.map((e) =>
             e.id === id ? { ...e, status } : e
           ),
+        })),
+
+      setCoverImage: (episodeId, platform, url) =>
+        set((state) => ({
+          episodes: state.episodes.map((e) => {
+            if (e.id !== episodeId || !e.publishingPack) return e;
+            return {
+              ...e,
+              publishingPack: {
+                ...e.publishingPack,
+                platforms: e.publishingPack.platforms.map((p) =>
+                  p.platform === platform
+                    ? { ...p, coverImageUrl: url }
+                    : p
+                ),
+              },
+            };
+          }),
         })),
 
       addShotId: (episodeId, shotId) =>

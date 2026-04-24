@@ -9,6 +9,8 @@ export interface PlatformCopy {
   tags: string[];
   coverText: string;
   pinnedComment?: string;
+  /** AI 生成的封面图 data URL */
+  coverImageUrl?: string;
 }
 
 export interface PublishingPack {
