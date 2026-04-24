@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { hasApiKey as checkKey } from '../services/apiKey';
 
-export type CenterTab = 'episodes' | 'chapters' | 'shots';
+export type CenterTab = 'episodes' | 'chapters' | 'shots' | 'calendar';
 
 interface UIStore {
   centerTab: CenterTab;

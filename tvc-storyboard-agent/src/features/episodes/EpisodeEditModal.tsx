@@ -32,6 +32,7 @@ interface FormState {
   priority: Priority;
   format: EpisodeFormat;
   status: EpisodeStatus;
+  plannedReleaseAt: string; // yyyy-mm-dd，空串表示未定
 }
 
 function toForm(e: Episode): FormState {
@@ -47,10 +48,18 @@ function toForm(e: Episode): FormState {
     priority: e.priority,
     format: e.format,
     status: e.status,
+    plannedReleaseAt: e.plannedReleaseAt
+      ? new Date(e.plannedReleaseAt).toISOString().slice(0, 10)
+      : '',
   };
 }
 
 function fromForm(f: FormState): Partial<Episode> {
+  let plannedReleaseAt: number | undefined = undefined;
+  if (f.plannedReleaseAt) {
+    const t = new Date(f.plannedReleaseAt).getTime();
+    if (Number.isFinite(t)) plannedReleaseAt = t;
+  }
   return {
     title: f.title.trim(),
     mainConflict: f.mainConflict.trim(),
@@ -66,6 +75,7 @@ function fromForm(f: FormState): Partial<Episode> {
     priority: f.priority,
     format: f.format,
     status: f.status,
+    plannedReleaseAt,
   };
 }
 
@@ -181,14 +191,24 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
             </Field>
           </div>
 
-          <Field label="目标时长">
-            <input
-              type="text"
-              value={form.targetDuration}
-              onChange={(e) => patch('targetDuration', e.target.value)}
-              className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="目标时长">
+              <input
+                type="text"
+                value={form.targetDuration}
+                onChange={(e) => patch('targetDuration', e.target.value)}
+                className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+              />
+            </Field>
+            <Field label="计划发布日期">
+              <input
+                type="date"
+                value={form.plannedReleaseAt}
+                onChange={(e) => patch('plannedReleaseAt', e.target.value)}
+                className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+              />
+            </Field>
+          </div>
 
           <Field label="主冲突">
             <textarea

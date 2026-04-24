@@ -10,6 +10,7 @@ import {
 } from '../stores';
 import { SEASON_NAME, SEASON_CORE_EMOTIONS } from '../data/episodes';
 import EpisodeList from '../features/episodes/EpisodeList';
+import EpisodeCalendar from '../features/episodes/EpisodeCalendar';
 import ChapterList from '../features/chapters/ChapterList';
 import ChapterDetail from '../features/chapters/ChapterDetail';
 import ShotTable from '../features/shots/ShotTable';
@@ -24,6 +25,7 @@ const TABS: { id: CenterTab; label: string; hint: string }[] = [
   { id: 'episodes', label: '集数', hint: '第一季主剧情集规划' },
   { id: 'chapters', label: '章节', hint: '9 章原书稿' },
   { id: 'shots', label: '镜头', hint: '镜头表 / 生产状态' },
+  { id: 'calendar', label: '日历', hint: '按计划发布日期排布' },
 ];
 
 const CenterPanel: React.FC = () => {
@@ -149,6 +151,7 @@ const CenterPanel: React.FC = () => {
             <ChapterList onSelect={setChapterDetailId} />
           ))}
         {centerTab === 'shots' && <ShotTable />}
+        {centerTab === 'calendar' && <EpisodeCalendar />}
       </div>
     </div>
   );
