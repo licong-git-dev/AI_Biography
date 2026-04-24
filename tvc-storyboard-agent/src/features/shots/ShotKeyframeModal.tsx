@@ -60,6 +60,8 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
   const voiceAbortRef = useRef<AbortController | null>(null);
   const srtAbortRef = useRef<AbortController | null>(null);
 
+  const [styleNameInput, setStyleNameInput] = useState<string | null>(null);
+
   // 只在内层 ShotEditModal 未开时响应 Esc，避免同时关两层
   useEscapeKey(Boolean(shotId) && Boolean(shot) && !editOpen, onClose);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -296,20 +298,9 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
           <div className="mt-3 flex justify-end gap-2">
             {shot.keyframeUrl && shot.prompt && !generatingImage && (
               <button
-                onClick={() => {
-                  const name = prompt(
-                    '风格模板名称？',
-                    `EP · 镜 ${shot.number} · ${shot.shotSize}`
-                  );
-                  if (!name || !name.trim()) return;
-                  addStyleTemplate({
-                    name: name.trim(),
-                    prompt: shot.prompt!,
-                    thumbnailUrl: shot.keyframeUrl,
-                    sourceShotId: shot.id,
-                  });
-                  toast.success(`已保存风格模板：${name.trim()}`);
-                }}
+                onClick={() =>
+                  setStyleNameInput(`镜 ${shot.number} · ${shot.shotSize}`)
+                }
                 className="flex items-center gap-1 rounded border border-amber-800 bg-amber-900/20 px-2 py-1.5 text-[11px] text-amber-300 hover:border-amber-700"
                 type="button"
                 title="把当前关键帧的 prompt + 缩略图存到资产库，未来可复用"
@@ -525,6 +516,75 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
         open={editOpen}
         onClose={() => setEditOpen(false)}
       />
+
+      {styleNameInput !== null && shot.keyframeUrl && shot.prompt && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setStyleNameInput(null);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-lg border border-neutral-800 bg-neutral-950 p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-2 text-sm font-semibold text-neutral-100">
+              保存风格模板
+            </div>
+            <div className="mb-3 text-[11px] text-neutral-500">
+              把当前关键帧的 prompt + 缩略图存到资产库
+            </div>
+            <input
+              type="text"
+              value={styleNameInput}
+              onChange={(e) => setStyleNameInput(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && styleNameInput.trim()) {
+                  addStyleTemplate({
+                    name: styleNameInput.trim(),
+                    prompt: shot.prompt!,
+                    thumbnailUrl: shot.keyframeUrl,
+                    sourceShotId: shot.id,
+                  });
+                  toast.success(`已保存：${styleNameInput.trim()}`);
+                  setStyleNameInput(null);
+                }
+              }}
+              placeholder="模板名称"
+              className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                onClick={() => setStyleNameInput(null)}
+                className="rounded border border-neutral-800 px-3 py-1.5 text-xs text-neutral-300 hover:border-neutral-700"
+                type="button"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  if (!styleNameInput.trim()) return;
+                  addStyleTemplate({
+                    name: styleNameInput.trim(),
+                    prompt: shot.prompt!,
+                    thumbnailUrl: shot.keyframeUrl,
+                    sourceShotId: shot.id,
+                  });
+                  toast.success(`已保存：${styleNameInput.trim()}`);
+                  setStyleNameInput(null);
+                }}
+                disabled={!styleNameInput.trim()}
+                className="rounded bg-amber-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 disabled:opacity-50"
+                type="button"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

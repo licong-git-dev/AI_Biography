@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { Plus, Search, Trash2, X as XIcon } from 'lucide-react';
 import { useCharacterStore, useChapterStore, useShotStore } from '../stores';
 import type { Character, CharacterGroup } from '../types';
 import CharacterEditModal from '../features/characters/CharacterEditModal';
@@ -118,8 +118,18 @@ const LeftPanel: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜索角色名 / 气质 / 年龄"
-              className="w-full rounded border border-neutral-800 bg-neutral-900 pl-6 pr-2 py-1 text-[11px] text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+              className="w-full rounded border border-neutral-800 bg-neutral-900 pl-6 pr-6 py-1 text-[11px] text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
             />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-neutral-500 hover:bg-neutral-800 hover:text-neutral-200"
+                type="button"
+                title="清除"
+              >
+                <XIcon size={10} />
+              </button>
+            )}
           </div>
           <div className="space-y-3">
             {GROUP_ORDER.map((group) => {

@@ -102,33 +102,44 @@ const EpisodeCalendar: React.FC = () => {
                   </span>
                 </div>
                 <div className="space-y-1">
-                  {eps.map((ep) => (
-                    <button
-                      key={ep.id}
-                      onClick={() => setActive(ep.id)}
-                      className="flex w-full items-center justify-between gap-2 rounded border border-neutral-800/60 bg-neutral-900/50 px-2 py-1.5 text-left hover:border-neutral-700"
-                      type="button"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-[10px] text-neutral-500">
-                            EP{String(ep.episodeNumber).padStart(2, '0')}
-                          </span>
-                          <span className="truncate text-xs text-neutral-100">
-                            《{ep.title}》
-                          </span>
-                          <span
-                            className={`rounded border px-1 py-0.5 text-[9px] ${PRIORITY_COLOR[ep.priority]}`}
-                          >
-                            {ep.priority}
-                          </span>
+                  {eps.map((ep) => {
+                    const hasMetrics = (ep.metrics?.length ?? 0) > 0;
+                    return (
+                      <button
+                        key={ep.id}
+                        onClick={() => setActive(ep.id)}
+                        className="flex w-full items-center justify-between gap-2 rounded border border-neutral-800/60 bg-neutral-900/50 px-2 py-1.5 text-left hover:border-neutral-700"
+                        type="button"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] text-neutral-500">
+                              EP{String(ep.episodeNumber).padStart(2, '0')}
+                            </span>
+                            <span className="truncate text-xs text-neutral-100">
+                              《{ep.title}》
+                            </span>
+                            <span
+                              className={`rounded border px-1 py-0.5 text-[9px] ${PRIORITY_COLOR[ep.priority]}`}
+                            >
+                              {ep.priority}
+                            </span>
+                            {hasMetrics && (
+                              <span
+                                className="rounded bg-emerald-900/60 px-1 py-0.5 text-[9px] text-emerald-200"
+                                title="已在一个或多个平台录入指标"
+                              >
+                                已发布
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <span className="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] text-neutral-400">
-                        {ep.status}
-                      </span>
-                    </button>
-                  ))}
+                        <span className="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] text-neutral-400">
+                          {ep.status}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );

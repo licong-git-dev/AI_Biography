@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AlertTriangle, Sparkles } from 'lucide-react';
 import {
   useCharacterStore,
@@ -20,74 +20,113 @@ const DashboardView: React.FC = () => {
   const setActiveEpisode = useEpisodeStore((s) => s.setActive);
   const setCenterTab = useUIStore((s) => s.setCenterTab);
 
-  // 派生指标
-  const charactersWithRef = characters.filter((c) => c.referenceImageUrl);
-  const episodesWithHook = episodes.filter((e) => e.hook);
-  const episodesWithMetrics = episodes.filter(
-    (e) => (e.metrics?.length ?? 0) > 0
-  );
-  const episodesWithPack = episodes.filter((e) => e.publishingPack);
-  const episodesWithDate = episodes.filter((e) => e.plannedReleaseAt);
+  // 派生指标：用 useMemo 避免 episodes/shots 没变时重算
+  const derived = useMemo(() => {
+    // 用 Map 把 shots 按 episode 分组一次，避免在 episodes.map 里对
+    // shots 做 N×M filter
+    const shotsByEpisode = new Map<string, typeof shots>();
+    for (const s of shots) {
+      const list = shotsByEpisode.get(s.episodeId);
+      if (list) list.push(s);
+      else shotsByEpisode.set(s.episodeId, [s]);
+    }
 
-  const keyframeDone = shots.filter((s) => s.keyframeUrl).length;
-  const videoDone = shots.filter((s) => s.videoUrl).length;
-  const voiceNeeded = shots.filter((s) => extractSpeechText(s)).length;
-  const voiceDone = shots.filter((s) => s.voiceUrl).length;
+    const charactersWithRef = characters.filter((c) => c.referenceImageUrl);
+    const episodesWithHook = episodes.filter((e) => e.hook);
+    const episodesWithMetrics = episodes.filter(
+      (e) => (e.metrics?.length ?? 0) > 0
+    );
+    const episodesWithPack = episodes.filter((e) => e.publishingPack);
+    const episodesWithDate = episodes.filter((e) => e.plannedReleaseAt);
 
-  const unackAlerts = alerts.filter((a) => !a.acknowledged);
+    const keyframeDone = shots.filter((s) => s.keyframeUrl).length;
+    const videoDone = shots.filter((s) => s.videoUrl).length;
+    const voiceNeeded = shots.filter((s) => extractSpeechText(s)).length;
+    const voiceDone = shots.filter((s) => s.voiceUrl).length;
 
-  // 每集完成度打分
-  const episodeProgress = episodes.map((ep) => {
-    const epShots = shots.filter((s) => s.episodeId === ep.id);
-    if (epShots.length === 0)
-      return { ep, pct: 0, shotCount: 0, gaps: ['无镜头表'] };
+    const episodeProgress = episodes.map((ep) => {
+      const epShots = shotsByEpisode.get(ep.id) ?? [];
+      if (epShots.length === 0)
+        return { ep, pct: 0, shotCount: 0, gaps: ['无镜头表'] };
 
-    const keyframes = epShots.filter((s) => s.keyframeUrl).length;
-    const videos = epShots.filter((s) => s.videoUrl).length;
-    const voiceTargets = epShots.filter((s) => extractSpeechText(s));
-    const voices = voiceTargets.filter((s) => s.voiceUrl).length;
+      const keyframes = epShots.filter((s) => s.keyframeUrl).length;
+      const videos = epShots.filter((s) => s.videoUrl).length;
+      const voiceTargets = epShots.filter((s) => extractSpeechText(s));
+      const voices = voiceTargets.filter((s) => s.voiceUrl).length;
 
-    const gaps: string[] = [];
-    if (!ep.hook) gaps.push('无钩子');
-    if (keyframes < epShots.length)
-      gaps.push(`关键帧 ${keyframes}/${epShots.length}`);
-    if (videos < epShots.length)
-      gaps.push(`视频 ${videos}/${epShots.length}`);
-    if (voiceTargets.length > 0 && voices < voiceTargets.length)
-      gaps.push(`配音 ${voices}/${voiceTargets.length}`);
-    if (!ep.publishingPack) gaps.push('无发布文案');
+      const gaps: string[] = [];
+      if (!ep.hook) gaps.push('无钩子');
+      if (keyframes < epShots.length)
+        gaps.push(`关键帧 ${keyframes}/${epShots.length}`);
+      if (videos < epShots.length)
+        gaps.push(`视频 ${videos}/${epShots.length}`);
+      if (voiceTargets.length > 0 && voices < voiceTargets.length)
+        gaps.push(`配音 ${voices}/${voiceTargets.length}`);
+      if (!ep.publishingPack) gaps.push('无发布文案');
 
-    const max = 4 + (voiceTargets.length > 0 ? 1 : 0); // hook, keyframe, video, pack, (voice if needed)
-    let hit = 0;
-    if (ep.hook) hit++;
-    if (keyframes === epShots.length) hit++;
-    if (videos === epShots.length) hit++;
-    if (voiceTargets.length === 0 || voices === voiceTargets.length) hit++;
-    if (ep.publishingPack) hit++;
+      const max = 4 + (voiceTargets.length > 0 ? 1 : 0);
+      let hit = 0;
+      if (ep.hook) hit++;
+      if (keyframes === epShots.length) hit++;
+      if (videos === epShots.length) hit++;
+      if (voiceTargets.length === 0 || voices === voiceTargets.length) hit++;
+      if (ep.publishingPack) hit++;
+
+      return {
+        ep,
+        pct: Math.round((hit / max) * 100),
+        shotCount: epShots.length,
+        gaps,
+      };
+    });
+
+    const totalAssets =
+      shots.length * 2 +
+      voiceNeeded +
+      episodes.length * 1 +
+      characters.length * 1;
+    const doneAssets =
+      keyframeDone +
+      videoDone +
+      voiceDone +
+      episodesWithPack.length +
+      charactersWithRef.length;
+    const overallPct =
+      totalAssets > 0 ? Math.round((doneAssets / totalAssets) * 100) : 0;
 
     return {
-      ep,
-      pct: Math.round((hit / max) * 100),
-      shotCount: epShots.length,
-      gaps,
+      charactersWithRef,
+      episodesWithHook,
+      episodesWithMetrics,
+      episodesWithPack,
+      episodesWithDate,
+      keyframeDone,
+      videoDone,
+      voiceDone,
+      episodeProgress,
+      totalAssets,
+      doneAssets,
+      overallPct,
     };
-  });
+  }, [characters, episodes, shots]);
 
-  // 整体健康度
-  const totalAssets =
-    shots.length * 2 +
-    voiceNeeded +
-    episodes.length * 1 +
-    characters.length * 1;
-  const doneAssets =
-    keyframeDone +
-    videoDone +
-    voiceDone +
-    episodesWithPack.length +
-    charactersWithRef.length;
-  const overallPct = totalAssets > 0
-    ? Math.round((doneAssets / totalAssets) * 100)
-    : 0;
+  const {
+    charactersWithRef,
+    episodesWithHook,
+    episodesWithMetrics,
+    episodesWithPack,
+    episodesWithDate,
+    keyframeDone,
+    episodeProgress,
+    totalAssets,
+    doneAssets,
+    overallPct,
+  } = derived;
+
+  const unackAlerts = useMemo(
+    () => alerts.filter((a) => !a.acknowledged),
+    [alerts]
+  );
 
   const jumpToEpisode = (epId: string) => {
     setActiveEpisode(epId);

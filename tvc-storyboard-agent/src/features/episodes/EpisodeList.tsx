@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, Copy, Pencil, Search, Trash2 } from 'lucide-react';
+import { AlertTriangle, Copy, Pencil, Search, Trash2, X as XIcon } from 'lucide-react';
 import { useAlertsStore, useEpisodeStore, useShotStore } from '../../stores';
 import type { Episode, Priority } from '../../types';
 import EpisodeEditModal from './EpisodeEditModal';
@@ -22,7 +22,7 @@ const EpisodeList: React.FC = () => {
   const removeShotsByEpisode = useShotStore((s) => s.removeByEpisode);
   const shots = useShotStore((s) => s.shots);
   const alerts = useAlertsStore((s) => s.alerts);
-  const acknowledgeAllForEpisode = useAlertsStore((s) => s.acknowledgeAll);
+  const clearAlertsByEpisode = useAlertsStore((s) => s.clearByEpisode);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -56,6 +56,7 @@ const EpisodeList: React.FC = () => {
         : `删除《${title}》？此操作不可撤销。`;
     if (!confirm(msg)) return;
     removeShotsByEpisode(id);
+    clearAlertsByEpisode(id);
     remove(id);
   };
 
@@ -86,8 +87,18 @@ const EpisodeList: React.FC = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={`搜索集数（标题 / 记忆点 / 主冲突...）· ${search ? filteredEpisodes.length : episodes.length} 条`}
-          className="w-full rounded border border-neutral-800 bg-neutral-900 pl-7 pr-2 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+          className="w-full rounded border border-neutral-800 bg-neutral-900 pl-7 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-neutral-500 hover:bg-neutral-800 hover:text-neutral-200"
+            type="button"
+            title="清除"
+          >
+            <XIcon size={11} />
+          </button>
+        )}
       </div>
       <div className="space-y-2">
         {filteredEpisodes.map((ep) => {

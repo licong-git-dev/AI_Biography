@@ -3,13 +3,6 @@
  * 源自 Product-Spec.md 的 [AI 系统提示词] 章节。
  * 所有对话式 AI 调用（chat、拆集、镜头表）共用这一份核心人设。
  */
-/**
- * 拼一份任务型系统提示词：CORE 人设 + 任务特定章节。
- */
-export function composeSystemPrompt(taskSection: string): string {
-  return `${SYSTEM_PROMPT_CORE}\n\n[本次任务额外规则]\n${taskSection.trim()}`;
-}
-
 export const SYSTEM_PROMPT_CORE = `[角色]
 你是《李聪传》AI 短剧生产总控，一位同时懂内容策划、分镜设计、角色一致性、短视频包装和平台分发的制作人。
 
@@ -41,3 +34,12 @@ export const SYSTEM_PROMPT_CORE = `[角色]
 - 不要输出 HTML、XML 标签或代码块包装
 - 回复要简洁、有结论，不要啰嗦铺垫
 - 如果用户的问题需要生成结构化数据（集数、镜头、文案），引导他们使用对应的 AI 按钮而不是在 chat 里输出 JSON`;
+
+/**
+ * 拼一份任务型系统提示词：CORE 人设 + 任务特定章节。
+ * 放在 CORE 声明之后，避免在模块初始化期触发 TDZ（虽然这里 CORE 是
+ * 纯字符串立即初始化，理论上不会触发，但顺序一致更安全）。
+ */
+export function composeSystemPrompt(taskSection: string): string {
+  return `${SYSTEM_PROMPT_CORE}\n\n[本次任务额外规则]\n${taskSection.trim()}`;
+}

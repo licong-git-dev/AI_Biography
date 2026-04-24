@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { ArrowUp, ArrowDown, Search, Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, Search, Trash2, X as XIcon } from 'lucide-react';
 import {
   useShotStore,
   useEpisodeStore,
@@ -353,8 +353,18 @@ const ShotTable: React.FC = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="搜索镜头（镜号 / 景别 / 画面 / 角色...）"
-          className="w-full rounded border border-neutral-800 bg-neutral-900 pl-7 pr-2 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+          className="w-full rounded border border-neutral-800 bg-neutral-900 pl-7 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-neutral-500 hover:bg-neutral-800 hover:text-neutral-200"
+            type="button"
+            title="清除"
+          >
+            <XIcon size={11} />
+          </button>
+        )}
       </div>
 
       {/* 顶部状态行 */}

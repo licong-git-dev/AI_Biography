@@ -51,7 +51,13 @@ export const useChatStore = create<ChatStore>()(
       name: 'licong-chat',
       version: 1,
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ messages: state.messages }),
+      // 不持久化 attachmentUrls（全是 base64，会把 localStorage 撑爆）
+      // attachmentLabels 保留，这样重载后还能看到"附带镜头：A-01"
+      partialize: (state) => ({
+        messages: state.messages.map((m) =>
+          m.attachmentUrls ? { ...m, attachmentUrls: undefined } : m
+        ),
+      }),
     }
   )
 );

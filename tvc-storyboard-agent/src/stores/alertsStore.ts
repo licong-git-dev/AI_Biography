@@ -21,6 +21,7 @@ interface AlertsStore {
   acknowledgeAll: (episodeId: string) => void;
   remove: (id: string) => void;
   clearByTrigger: (triggerEpisodeId: string) => void;
+  clearByEpisode: (episodeId: string) => void;
   byEpisode: (episodeId: string) => EpisodeAlert[];
 }
 
@@ -72,6 +73,15 @@ export const useAlertsStore = create<AlertsStore>()(
         set((s) => ({
           alerts: s.alerts.filter(
             (a) => a.triggeredByEpisodeId !== triggerEpisodeId
+          ),
+        })),
+
+      clearByEpisode: (episodeId) =>
+        set((s) => ({
+          alerts: s.alerts.filter(
+            (a) =>
+              a.affectedEpisodeId !== episodeId &&
+              a.triggeredByEpisodeId !== episodeId
           ),
         })),
 
