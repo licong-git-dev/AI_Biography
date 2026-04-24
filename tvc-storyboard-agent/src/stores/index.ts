@@ -11,3 +11,9 @@ export { useLibraryStore } from './libraryStore';
 export type { SavedHook, SavedStyle } from './libraryStore';
 export { useAlertsStore } from './alertsStore';
 export type { EpisodeAlert, AlertSeverity } from './alertsStore';
+export { useFeedbackStore } from './feedbackStore';
+export type {
+  FeedbackEntry,
+  FeedbackKind,
+  FeedbackVerdict,
+} from './feedbackStore';

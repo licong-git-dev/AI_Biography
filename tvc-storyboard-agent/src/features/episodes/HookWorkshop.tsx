@@ -1,7 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { BookmarkPlus, Lightbulb, Sparkles } from 'lucide-react';
+import { BookmarkPlus, Lightbulb, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import type { Episode } from '../../types';
-import { useEpisodeStore, useLibraryStore, useUIStore } from '../../stores';
+import {
+  useEpisodeStore,
+  useFeedbackStore,
+  useLibraryStore,
+  useUIStore,
+} from '../../stores';
 import { generateHookCandidates, type HookCandidate } from './hookService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
@@ -25,6 +30,7 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
   const allEpisodes = useEpisodeStore((s) => s.episodes);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const addLibraryHook = useLibraryStore((s) => s.addHook);
+  const addFeedback = useFeedbackStore((s) => s.add);
 
   const [candidates, setCandidates] = useState<HookCandidate[] | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -61,6 +67,25 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
 
   const handleAdopt = (c: HookCandidate) => {
     update(episode.id, { hook: c.text });
+    // adopt 视为强正反馈；同时把没被采用的其它候选记为 rejected，形成偏好
+    addFeedback({
+      kind: 'hook',
+      verdict: 'adopted',
+      sample: `${c.style}：${c.text}`,
+      sourceEpisodeId: episode.id,
+    });
+    if (candidates) {
+      for (const other of candidates) {
+        if (other.text !== c.text) {
+          addFeedback({
+            kind: 'hook',
+            verdict: 'rejected',
+            sample: `${other.style}：${other.text}`,
+            sourceEpisodeId: episode.id,
+          });
+        }
+      }
+    }
     toast.success(`已将钩子更新为：${c.text.slice(0, 20)}…`);
     setCandidates(null);
   };
@@ -72,7 +97,23 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
       why: c.why,
       sourceEpisodeId: episode.id,
     });
+    addFeedback({
+      kind: 'hook',
+      verdict: 'up',
+      sample: `${c.style}：${c.text}`,
+      sourceEpisodeId: episode.id,
+    });
     toast.success('已收藏到资产库');
+  };
+
+  const handleThumb = (c: HookCandidate, verdict: 'up' | 'down') => {
+    addFeedback({
+      kind: 'hook',
+      verdict,
+      sample: `${c.style}：${c.text}`,
+      sourceEpisodeId: episode.id,
+    });
+    toast.info(verdict === 'up' ? '记为偏好 👍' : '记为不喜欢 👎');
   };
 
   return (
@@ -155,8 +196,24 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
                   {c.style}
                 </span>
                 <button
+                  onClick={() => handleThumb(c, 'up')}
+                  className="ml-auto rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-emerald-300"
+                  type="button"
+                  title="记为偏好（不采用但喜欢）"
+                >
+                  <ThumbsUp size={10} />
+                </button>
+                <button
+                  onClick={() => handleThumb(c, 'down')}
+                  className="rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-red-300"
+                  type="button"
+                  title="记为不喜欢（以后避开）"
+                >
+                  <ThumbsDown size={10} />
+                </button>
+                <button
                   onClick={() => handleFavorite(c)}
-                  className="ml-auto rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-amber-300"
+                  className="rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-amber-300"
                   type="button"
                   title="收藏到资产库"
                 >
@@ -166,6 +223,7 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
                   onClick={() => handleAdopt(c)}
                   className="rounded border border-emerald-800 bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-200 hover:border-emerald-700"
                   type="button"
+                  title="采用此钩子（其它候选自动记为"不喜欢"）"
                 >
                   采用
                 </button>
