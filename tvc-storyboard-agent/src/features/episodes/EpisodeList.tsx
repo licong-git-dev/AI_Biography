@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Pencil, Search, Trash2 } from 'lucide-react';
+import { Copy, Pencil, Search, Trash2 } from 'lucide-react';
 import { useEpisodeStore, useShotStore } from '../../stores';
-import type { Priority } from '../../types';
+import type { Episode, Priority } from '../../types';
 import EpisodeEditModal from './EpisodeEditModal';
+import { toast } from '../../stores/toastStore';
 
 const PRIORITY_COLOR: Record<Priority, string> = {
   S: 'bg-red-900/40 text-red-300 border-red-800/50',
@@ -16,6 +17,8 @@ const EpisodeList: React.FC = () => {
   const activeId = useEpisodeStore((s) => s.activeId);
   const setActive = useEpisodeStore((s) => s.setActive);
   const remove = useEpisodeStore((s) => s.remove);
+  const add = useEpisodeStore((s) => s.add);
+  const nextEpisodeNumber = useEpisodeStore((s) => s.nextEpisodeNumber);
   const removeShotsByEpisode = useShotStore((s) => s.removeByEpisode);
   const shots = useShotStore((s) => s.shots);
 
@@ -52,6 +55,24 @@ const EpisodeList: React.FC = () => {
     if (!confirm(msg)) return;
     removeShotsByEpisode(id);
     remove(id);
+  };
+
+  const handleClone = (source: Episode) => {
+    const n = nextEpisodeNumber(source.seasonNumber);
+    const copy: Episode = {
+      ...source,
+      id: `ep-s${source.seasonNumber}-${String(n).padStart(2, '0')}-${Math.random().toString(36).slice(2, 6)}`,
+      episodeNumber: n,
+      title: `${source.title}（副本）`,
+      status: '规划中',
+      shotIds: undefined, // 副本不继承镜头引用，走一份新镜头表
+      publishingPack: undefined, // 发布包也得重新生成
+    };
+    add(copy);
+    setActive(copy.id);
+    toast.success(
+      `《${source.title}》已复制为 EP${String(n).padStart(2, '0')}，位于本季末尾`
+    );
   };
 
   return (
@@ -116,6 +137,17 @@ const EpisodeList: React.FC = () => {
               </button>
 
               <div className="flex items-center justify-end gap-1 border-t border-neutral-800/60 px-2 py-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClone(ep);
+                  }}
+                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
+                  type="button"
+                  title="复制一份（A/B 对比）"
+                >
+                  <Copy size={10} /> 复制
+                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
