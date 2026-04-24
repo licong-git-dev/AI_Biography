@@ -22,6 +22,7 @@ const STYLE_COLOR: Record<HookCandidate['style'], string> = {
 
 const HookWorkshop: React.FC<Props> = ({ episode }) => {
   const update = useEpisodeStore((s) => s.update);
+  const allEpisodes = useEpisodeStore((s) => s.episodes);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
 
   const [candidates, setCandidates] = useState<HookCandidate[] | null>(null);
@@ -35,7 +36,12 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const result = await generateHookCandidates(episode, 5, controller.signal);
+      const result = await generateHookCandidates(
+        episode,
+        5,
+        controller.signal,
+        allEpisodes
+      );
       setCandidates(result);
     } catch (e) {
       if (isAbortError(e)) {

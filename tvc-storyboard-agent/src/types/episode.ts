@@ -8,7 +8,7 @@ export type EpisodeStatus = '规划中' | '生产中' | '待审' | '已完成';
 
 export type Priority = 'S' | 'A' | 'A-' | 'B';
 
-import type { PublishingPack } from './publishing';
+import type { EpisodeMetric, PublishingPack } from './publishing';
 
 export interface Episode {
   id: string;
@@ -28,4 +28,8 @@ export interface Episode {
   climax?: string;
   suspense?: string;
   publishingPack?: PublishingPack;
+  /** 发布后录入的真实数据，驱动后续集的 AI 生成 */
+  metrics?: EpisodeMetric[];
+  /** 计划发布日期（时间戳），用于发布 calendar */
+  plannedReleaseAt?: number;
 }

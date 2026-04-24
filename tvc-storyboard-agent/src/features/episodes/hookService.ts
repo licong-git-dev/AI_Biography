@@ -4,6 +4,7 @@ import { composeSystemPrompt } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
 import { raceAbort } from '../../services/abort';
 import { recordCall } from '../../stores/statsStore';
+import { buildPriorMetricsContext } from '../publishing/metricsService';
 
 export interface HookCandidate {
   text: string;
@@ -20,8 +21,13 @@ const TASK_RULES = `你现在的工作是"钩子工坊"——为一集短剧设�
 - 给出 5 条候选，风格彼此不同，让用户对比挑选
 - 每条附一句"为什么这个钩子有用"`;
 
-function buildPrompt(episode: Episode, count: number): string {
-  return `为下面这一集生成 ${count} 个不同风格的开场钩子候选。
+function buildPrompt(
+  episode: Episode,
+  count: number,
+  priorMetrics: string | null
+): string {
+  const metricsBlock = priorMetrics ? `${priorMetrics}\n\n` : '';
+  return `${metricsBlock}为下面这一集生成 ${count} 个不同风格的开场钩子候选。
 
 【集信息】
 EP${String(episode.episodeNumber).padStart(2, '0')}《${episode.title}》
@@ -54,10 +60,14 @@ ${episode.suspense ? `- 结尾悬念：${episode.suspense}` : ''}
 export async function generateHookCandidates(
   episode: Episode,
   count: number = 5,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  priorEpisodes: Episode[] = []
 ): Promise<HookCandidate[]> {
   const ai = getGeminiClient();
-  const prompt = buildPrompt(episode, count);
+  const priorMetrics = buildPriorMetricsContext(
+    priorEpisodes.filter((e) => e.id !== episode.id)
+  );
+  const prompt = buildPrompt(episode, count, priorMetrics);
 
   recordCall('text');
   const response = await raceAbort(
