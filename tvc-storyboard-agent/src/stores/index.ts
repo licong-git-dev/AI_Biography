@@ -7,3 +7,5 @@ export type { CenterTab } from './uiStore';
 export { useChatStore } from './chatStore';
 export { useStatsStore } from './statsStore';
 export type { AICallKind } from './statsStore';
+export { useLibraryStore } from './libraryStore';
+export type { SavedHook, SavedStyle } from './libraryStore';

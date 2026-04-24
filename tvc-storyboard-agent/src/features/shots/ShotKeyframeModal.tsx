@@ -1,6 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { Download, Pencil } from 'lucide-react';
-import { useCharacterStore, useShotStore, useUIStore } from '../../stores';
+import { BookmarkPlus, Download, Pencil } from 'lucide-react';
+import {
+  useCharacterStore,
+  useLibraryStore,
+  useShotStore,
+  useUIStore,
+} from '../../stores';
+import { toast } from '../../stores/toastStore';
 import { generateShotKeyframe } from './shotService';
 import { generateShotVideo } from '../video/videoService';
 import {
@@ -39,6 +45,7 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
   const setSubtitle = useShotStore((s) => s.setSubtitle);
   const characters = useCharacterStore((s) => s.characters);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
+  const addStyleTemplate = useLibraryStore((s) => s.addStyle);
 
   const [generatingImage, setGeneratingImage] = useState(false);
   const [generatingVideo, setGeneratingVideo] = useState(false);
@@ -287,6 +294,29 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
           )}
 
           <div className="mt-3 flex justify-end gap-2">
+            {shot.keyframeUrl && shot.prompt && !generatingImage && (
+              <button
+                onClick={() => {
+                  const name = prompt(
+                    '风格模板名称？',
+                    `EP · 镜 ${shot.number} · ${shot.shotSize}`
+                  );
+                  if (!name || !name.trim()) return;
+                  addStyleTemplate({
+                    name: name.trim(),
+                    prompt: shot.prompt!,
+                    thumbnailUrl: shot.keyframeUrl,
+                    sourceShotId: shot.id,
+                  });
+                  toast.success(`已保存风格模板：${name.trim()}`);
+                }}
+                className="flex items-center gap-1 rounded border border-amber-800 bg-amber-900/20 px-2 py-1.5 text-[11px] text-amber-300 hover:border-amber-700"
+                type="button"
+                title="把当前关键帧的 prompt + 缩略图存到资产库，未来可复用"
+              >
+                <BookmarkPlus size={11} /> 保存风格
+              </button>
+            )}
             {generatingImage && (
               <button
                 onClick={cancelImg}

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Lightbulb, Sparkles } from 'lucide-react';
+import { BookmarkPlus, Lightbulb, Sparkles } from 'lucide-react';
 import type { Episode } from '../../types';
-import { useEpisodeStore, useUIStore } from '../../stores';
+import { useEpisodeStore, useLibraryStore, useUIStore } from '../../stores';
 import { generateHookCandidates, type HookCandidate } from './hookService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
@@ -24,6 +24,7 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
   const update = useEpisodeStore((s) => s.update);
   const allEpisodes = useEpisodeStore((s) => s.episodes);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
+  const addLibraryHook = useLibraryStore((s) => s.addHook);
 
   const [candidates, setCandidates] = useState<HookCandidate[] | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -62,6 +63,16 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
     update(episode.id, { hook: c.text });
     toast.success(`已将钩子更新为：${c.text.slice(0, 20)}…`);
     setCandidates(null);
+  };
+
+  const handleFavorite = (c: HookCandidate) => {
+    addLibraryHook({
+      text: c.text,
+      style: c.style,
+      why: c.why,
+      sourceEpisodeId: episode.id,
+    });
+    toast.success('已收藏到资产库');
   };
 
   return (
@@ -144,8 +155,16 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
                   {c.style}
                 </span>
                 <button
+                  onClick={() => handleFavorite(c)}
+                  className="ml-auto rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-amber-300"
+                  type="button"
+                  title="收藏到资产库"
+                >
+                  <BookmarkPlus size={10} />
+                </button>
+                <button
                   onClick={() => handleAdopt(c)}
-                  className="ml-auto rounded border border-emerald-800 bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-200 hover:border-emerald-700"
+                  className="rounded border border-emerald-800 bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-200 hover:border-emerald-700"
                   type="button"
                 >
                   采用
