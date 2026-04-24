@@ -1,6 +1,7 @@
 import React from 'react';
 import { useUIStore } from '../stores';
 import StorageIndicator from '../components/StorageIndicator';
+import BackupButton from '../features/backup/BackupButton';
 
 const Header: React.FC = () => {
   const apiKeyPresent = useUIStore((s) => s.apiKeyPresent);
@@ -17,6 +18,7 @@ const Header: React.FC = () => {
 
       <div className="flex items-center gap-2">
         <StorageIndicator />
+        <BackupButton />
         <button
           onClick={openApiKey}
           className="flex items-center gap-1.5 rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-300 hover:border-neutral-700 hover:text-neutral-100"
