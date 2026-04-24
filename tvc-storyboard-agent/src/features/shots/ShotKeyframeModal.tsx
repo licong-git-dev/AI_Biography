@@ -178,10 +178,21 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
             <img
               src={shot.keyframeUrl}
               alt={shot.description}
-              className="w-full rounded border border-neutral-800"
+              className={`w-full rounded border ${
+                shot.keyframeStale
+                  ? 'border-amber-700'
+                  : 'border-neutral-800'
+              }`}
             />
           ) : (
             <Placeholder label="还没生成关键帧" />
+          )}
+
+          {shot.keyframeStale && shot.keyframeUrl && (
+            <div className="mt-2 rounded border border-amber-700 bg-amber-950/30 p-2 text-[11px] text-amber-200">
+              ⚠️ 镜头信息（画面 / 景别 / 运镜 / 角色）有更新，当前关键帧
+              已过时。建议重新生成。
+            </div>
           )}
 
           {involved.length > 0 && refsReady < involved.length && (

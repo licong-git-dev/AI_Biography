@@ -43,9 +43,27 @@ export const useShotStore = create<ShotStore>()(
 
       update: (id, patch) =>
         set((state) => ({
-          shots: state.shots.map((s) =>
-            s.id === id ? { ...s, ...patch } : s
-          ),
+          shots: state.shots.map((s) => {
+            if (s.id !== id) return s;
+            const next: Shot = { ...s, ...patch };
+            // 关键帧影响因子改动后，标记参考图为 stale（若已生成过）
+            if (s.keyframeUrl) {
+              const changedGenField =
+                (patch.description !== undefined &&
+                  patch.description !== s.description) ||
+                (patch.shotSize !== undefined &&
+                  patch.shotSize !== s.shotSize) ||
+                (patch.cameraMove !== undefined &&
+                  patch.cameraMove !== s.cameraMove) ||
+                (patch.characters !== undefined &&
+                  JSON.stringify(patch.characters) !==
+                    JSON.stringify(s.characters));
+              if (changedGenField) {
+                next.keyframeStale = true;
+              }
+            }
+            return next;
+          }),
         })),
 
       remove: (id) =>
@@ -94,7 +112,9 @@ export const useShotStore = create<ShotStore>()(
       setKeyframe: (id, url) =>
         set((state) => ({
           shots: state.shots.map((s) =>
-            s.id === id ? { ...s, keyframeUrl: url, genStatus: '已生成' } : s
+            s.id === id
+              ? { ...s, keyframeUrl: url, keyframeStale: false, genStatus: '已生成' }
+              : s
           ),
         })),
 

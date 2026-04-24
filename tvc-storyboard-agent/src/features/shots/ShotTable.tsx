@@ -549,11 +549,22 @@ const ShotTable: React.FC = () => {
                     </td>
                     <td className="px-3 py-2">
                       {shot.keyframeUrl ? (
-                        <img
-                          src={shot.keyframeUrl}
-                          alt=""
-                          className="h-12 w-auto rounded border border-neutral-800"
-                        />
+                        <div className="relative inline-block">
+                          <img
+                            src={shot.keyframeUrl}
+                            alt=""
+                            className={`h-12 w-auto rounded border ${
+                              shot.keyframeStale
+                                ? 'border-amber-700'
+                                : 'border-neutral-800'
+                            }`}
+                          />
+                          {shot.keyframeStale && (
+                            <span className="absolute -top-1 -right-1 rounded bg-amber-700 px-1 py-0.5 text-[9px] font-medium text-amber-50">
+                              需更新
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-[10px] text-neutral-600">
                           点击生成

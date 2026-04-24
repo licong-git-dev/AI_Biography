@@ -51,6 +51,7 @@ export interface Shot {
   dialogue?: string;
   prompt?: string;
   keyframeUrl?: string;
+  keyframeStale?: boolean;
   genStatus: ShotGenStatus;
 
   videoUrl?: string;
