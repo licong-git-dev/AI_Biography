@@ -10,6 +10,7 @@ import CharacterEditModal from '../features/characters/CharacterEditModal';
 import ChatPanel from '../features/chat/ChatPanel';
 import PublishingPanel from '../features/publishing/PublishingPanel';
 import MetricsPanel from '../features/publishing/MetricsPanel';
+import CompliancePanel from '../features/publishing/CompliancePanel';
 import HookWorkshop from '../features/episodes/HookWorkshop';
 
 type RightTab = 'context' | 'chat';
@@ -159,6 +160,7 @@ const RightPanel: React.FC = () => {
                 </div>
 
                 <PublishingPanel episode={activeEpisode} />
+                <CompliancePanel episode={activeEpisode} />
               </div>
             ) : (
               <div className="space-y-4">
