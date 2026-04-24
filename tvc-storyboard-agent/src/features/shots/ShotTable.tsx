@@ -18,6 +18,7 @@ import { ApiKeyMissingError } from '../../services/geminiClient';
 import ShotKeyframeModal from './ShotKeyframeModal';
 import { cloneSampleAShotsInto, SAMPLE_A_NARRATION } from '../../data/samples';
 import { toast } from '../../stores/toastStore';
+import { getPrice } from '../../stores/statsStore';
 
 const STATUS_COLOR: Record<ShotGenStatus, string> = {
   未生成: 'bg-neutral-800 text-neutral-500',
@@ -184,11 +185,13 @@ const ShotTable: React.FC = () => {
     if (ungenPreview.length === 0) return;
     const estSec = ungenPreview.length * 30; // Nano Banana Pro ≈ 20-40s
     const estMin = Math.ceil(estSec / 60);
+    const estCost = (ungenPreview.length * getPrice('image')).toFixed(2);
     if (
       !confirm(
         `批量生成 ${ungenPreview.length} 个关键帧
 • AI 调用：约 ${ungenPreview.length} 次（Nano Banana Pro）
 • 预计耗时：约 ${estMin} 分钟（每帧 20-40 秒，依账号速率）
+• 预计费用：约 $${estCost}（按当前单价）
 • 中间可随时点「中止帧」
 
 继续？`
@@ -263,11 +266,13 @@ const ShotTable: React.FC = () => {
       return;
     }
     const estSec = targetsPreview.length * 6; // TTS ≈ 4-8s
+    const estCost = (targetsPreview.length * getPrice('tts')).toFixed(3);
     if (
       !confirm(
         `批量合成 ${targetsPreview.length} 条配音（声线：${voiceSpeaker}）
 • AI 调用：约 ${targetsPreview.length} 次（Gemini TTS）
 • 预计耗时：约 ${estSec} 秒
+• 预计费用：约 $${estCost}（按当前单价）
 • 单条镜头可后续在 ShotKeyframeModal 换声线
 
 继续？`
