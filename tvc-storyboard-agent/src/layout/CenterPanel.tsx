@@ -14,6 +14,7 @@ import EpisodeCalendar from '../features/episodes/EpisodeCalendar';
 import ChapterList from '../features/chapters/ChapterList';
 import ChapterDetail from '../features/chapters/ChapterDetail';
 import ShotTable from '../features/shots/ShotTable';
+import DashboardView from '../features/dashboard/DashboardView';
 import Spinner from '../components/Spinner';
 import {
   downloadBlob,
@@ -22,6 +23,7 @@ import {
 import { toast } from '../stores/toastStore';
 
 const TABS: { id: CenterTab; label: string; hint: string }[] = [
+  { id: 'dashboard', label: '概览', hint: '项目健康度 / 缺口' },
   { id: 'episodes', label: '集数', hint: '第一季主剧情集规划' },
   { id: 'chapters', label: '章节', hint: '9 章原书稿' },
   { id: 'shots', label: '镜头', hint: '镜头表 / 生产状态' },
@@ -152,6 +154,7 @@ const CenterPanel: React.FC = () => {
           ))}
         {centerTab === 'shots' && <ShotTable />}
         {centerTab === 'calendar' && <EpisodeCalendar />}
+        {centerTab === 'dashboard' && <DashboardView />}
       </div>
     </div>
   );
