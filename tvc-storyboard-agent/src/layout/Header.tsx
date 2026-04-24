@@ -1,14 +1,16 @@
-import React from 'react';
-import { Keyboard } from 'lucide-react';
+import React, { useState } from 'react';
+import { Keyboard, ShieldCheck } from 'lucide-react';
 import { useUIStore } from '../stores';
 import StorageIndicator from '../components/StorageIndicator';
 import StatsIndicator from '../components/StatsIndicator';
 import BackupButton from '../features/backup/BackupButton';
+import ConsistencyModal from '../features/consistency/ConsistencyModal';
 
 const Header: React.FC = () => {
   const apiKeyPresent = useUIStore((s) => s.apiKeyPresent);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const openKeyboardHints = useUIStore((s) => s.openKeyboardHints);
+  const [consistencyOpen, setConsistencyOpen] = useState(false);
 
   return (
     <header className="flex h-10 items-center justify-between border-b border-neutral-800 bg-neutral-950 px-4">
@@ -22,6 +24,14 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-2">
         <StatsIndicator />
         <StorageIndicator />
+        <button
+          onClick={() => setConsistencyOpen(true)}
+          className="rounded border border-neutral-800 p-1 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+          type="button"
+          title="跨集一致性检查"
+        >
+          <ShieldCheck size={12} />
+        </button>
         <BackupButton />
         <button
           onClick={openKeyboardHints}
@@ -44,6 +54,10 @@ const Header: React.FC = () => {
           <span>{apiKeyPresent ? 'API Key 已配置' : '配置 API Key'}</span>
         </button>
       </div>
+      <ConsistencyModal
+        open={consistencyOpen}
+        onClose={() => setConsistencyOpen(false)}
+      />
     </header>
   );
 };
