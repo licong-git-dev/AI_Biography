@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Image as ImageIcon, X } from 'lucide-react';
 import {
   useCharacterStore,
   useChapterStore,
@@ -32,6 +33,8 @@ const ChatPanel: React.FC = () => {
 
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [attachedShotIds, setAttachedShotIds] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   // 自动滚到底部
@@ -59,20 +62,46 @@ const ChatPanel: React.FC = () => {
     return { character, episode, episodeShots, chapter };
   };
 
+  const episodeShotsWithKeyframe = activeEpisodeId
+    ? byEpisode(activeEpisodeId).filter((s) => s.keyframeUrl)
+    : [];
+
+  const attachedShots = episodeShotsWithKeyframe.filter((s) =>
+    attachedShotIds.includes(s.id)
+  );
+
+  const toggleAttach = (shotId: string) => {
+    setAttachedShotIds((prev) =>
+      prev.includes(shotId) ? prev.filter((id) => id !== shotId) : [...prev, shotId]
+    );
+  };
+
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || streaming) return;
 
     setError(null);
 
+    const userContent =
+      attachedShots.length > 0
+        ? `${trimmed}\n\n（附带镜头：${attachedShots.map((s) => s.number).join(' / ')}）`
+        : trimmed;
+
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
       role: 'user',
-      content: trimmed,
+      content: userContent,
       timestamp: Date.now(),
     };
     append(userMsg);
     setInput('');
+
+    // 捕获附件后清空 picker 状态
+    const attachmentDataUrls = attachedShots
+      .map((s) => s.keyframeUrl)
+      .filter((u): u is string => typeof u === 'string');
+    setAttachedShotIds([]);
+    setPickerOpen(false);
 
     const assistantMsg: ChatMessage = {
       id: `a-${Date.now()}`,
@@ -89,6 +118,7 @@ const ChatPanel: React.FC = () => {
         messages: historyForAI,
         userInput: trimmed,
         context: buildContext(),
+        attachmentDataUrls,
       });
       for await (const chunk of stream) {
         appendToLast(chunk);
@@ -194,6 +224,85 @@ const ChatPanel: React.FC = () => {
 
       {/* 输入区 */}
       <div className="shrink-0 border-t border-neutral-800 p-3">
+        {/* 附件栏：选关键帧 */}
+        {activeEpisode && episodeShotsWithKeyframe.length > 0 && (
+          <div className="mb-2">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setPickerOpen((v) => !v)}
+                disabled={streaming}
+                className="flex items-center gap-1 rounded border border-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400 hover:border-neutral-700 hover:text-neutral-200 disabled:opacity-40"
+                type="button"
+              >
+                <ImageIcon size={10} /> 引用关键帧
+                {attachedShots.length > 0 && ` · ${attachedShots.length}`}
+              </button>
+              {attachedShots.length > 0 && (
+                <button
+                  onClick={() => setAttachedShotIds([])}
+                  className="text-[10px] text-neutral-500 hover:text-neutral-300"
+                  type="button"
+                >
+                  清空
+                </button>
+              )}
+            </div>
+
+            {pickerOpen && (
+              <div className="mt-1.5 max-h-40 overflow-y-auto rounded border border-neutral-800 bg-neutral-900/60 p-2 scrollbar-thin">
+                <div className="grid grid-cols-4 gap-1.5">
+                  {episodeShotsWithKeyframe.map((s) => {
+                    const on = attachedShotIds.includes(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => toggleAttach(s.id)}
+                        type="button"
+                        className={`relative rounded border text-left overflow-hidden transition ${
+                          on
+                            ? 'border-sky-600 ring-1 ring-sky-500/50'
+                            : 'border-neutral-800 hover:border-neutral-700'
+                        }`}
+                        title={s.description}
+                      >
+                        <img
+                          src={s.keyframeUrl}
+                          alt={s.number}
+                          className="aspect-[9/16] w-full object-cover"
+                        />
+                        <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 py-0.5 font-mono text-[9px] text-neutral-200">
+                          {s.number}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {attachedShots.length > 0 && !pickerOpen && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {attachedShots.map((s) => (
+                  <span
+                    key={s.id}
+                    className="flex items-center gap-1 rounded bg-sky-900/40 px-1.5 py-0.5 text-[10px] text-sky-200"
+                  >
+                    <ImageIcon size={9} />
+                    {s.number}
+                    <button
+                      onClick={() => toggleAttach(s.id)}
+                      type="button"
+                      className="hover:text-sky-50"
+                    >
+                      <X size={9} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}

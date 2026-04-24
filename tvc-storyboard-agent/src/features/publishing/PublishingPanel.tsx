@@ -25,6 +25,7 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
 
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [activePlatform, setActivePlatform] = useState<Platform>('抖音');
 
@@ -60,14 +61,21 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
   const handleExport = async () => {
     setError(null);
     setExporting(true);
+    setExportProgress(0);
     try {
-      const blob = await exportEpisodeZip({ episode, shots, characters });
+      const blob = await exportEpisodeZip({
+        episode,
+        shots,
+        characters,
+        onProgress: setExportProgress,
+      });
       const filename = `EP${String(episode.episodeNumber).padStart(2, '0')}-${episode.title.replace(/[\\/:*?"<>|]/g, '_')}.zip`;
       downloadBlob(blob, filename);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setExporting(false);
+      setExportProgress(0);
     }
   };
 
@@ -236,7 +244,11 @@ const PublishingPanel: React.FC<Props> = ({ episode }) => {
           }
         >
           {exporting && <Spinner size={11} />}
-          {exporting ? '打包中…' : '导出本集 zip'}
+          {exporting
+            ? exportProgress > 0
+              ? `打包中… ${exportProgress}%`
+              : '打包中…'
+            : '导出本集 zip'}
         </button>
 
         <button

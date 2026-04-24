@@ -40,6 +40,7 @@ const CenterPanel: React.FC = () => {
 
   const [chapterDetailId, setChapterDetailId] = useState<string | null>(null);
   const [exportingSeason, setExportingSeason] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
 
   const seasonOneEpisodes = episodes.filter((e) => e.seasonNumber === 1);
 
@@ -49,6 +50,7 @@ const CenterPanel: React.FC = () => {
       return;
     }
     setExportingSeason(true);
+    setExportProgress(0);
     try {
       const blob = await exportSeasonZip({
         seasonNumber: 1,
@@ -56,6 +58,7 @@ const CenterPanel: React.FC = () => {
         episodes: seasonOneEpisodes,
         allShots: shots,
         characters,
+        onProgress: setExportProgress,
       });
       downloadBlob(blob, `${SEASON_NAME.replace(/[\\/:*?"<>|]/g, '_')}.zip`);
       toast.success(`${SEASON_NAME}：${seasonOneEpisodes.length} 集已打包`);
@@ -63,6 +66,7 @@ const CenterPanel: React.FC = () => {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setExportingSeason(false);
+      setExportProgress(0);
     }
   };
 
@@ -88,7 +92,11 @@ const CenterPanel: React.FC = () => {
             title="把第一季所有集数打包成一个 zip"
           >
             {exportingSeason ? <Spinner size={11} /> : <Download size={11} />}
-            {exportingSeason ? '打包中…' : '导出全季 zip'}
+            {exportingSeason
+              ? exportProgress > 0
+                ? `打包中… ${exportProgress}%`
+                : '打包中…'
+              : '导出全季 zip'}
           </button>
         </div>
 

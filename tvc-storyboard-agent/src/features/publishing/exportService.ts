@@ -20,8 +20,9 @@ export async function exportEpisodeZip(params: {
   episode: Episode;
   shots: Shot[];
   characters: Character[];
+  onProgress?: (percent: number) => void;
 }): Promise<Blob> {
-  const { episode, shots, characters } = params;
+  const { episode, shots, characters, onProgress } = params;
   const zip = new JSZip();
   const slug = episodeSlug(episode);
   const root = zip.folder(slug)!;
@@ -66,7 +67,9 @@ export async function exportEpisodeZip(params: {
     }
   }
 
-  return zip.generateAsync({ type: 'blob' });
+  return zip.generateAsync({ type: 'blob' }, (meta) => {
+    onProgress?.(Math.round(meta.percent));
+  });
 }
 
 /**
@@ -79,8 +82,16 @@ export async function exportSeasonZip(params: {
   episodes: Episode[];
   allShots: Shot[];
   characters: Character[];
+  onProgress?: (percent: number) => void;
 }): Promise<Blob> {
-  const { seasonNumber, seasonName, episodes, allShots, characters } = params;
+  const {
+    seasonNumber,
+    seasonName,
+    episodes,
+    allShots,
+    characters,
+    onProgress,
+  } = params;
   const zip = new JSZip();
   const root = zip.folder(`Season-${seasonNumber}-${safeSegment(seasonName)}`)!;
 
@@ -121,7 +132,9 @@ export async function exportSeasonZip(params: {
     }
   }
 
-  return zip.generateAsync({ type: 'blob' });
+  return zip.generateAsync({ type: 'blob' }, (meta) => {
+    onProgress?.(Math.round(meta.percent));
+  });
 }
 
 function buildSeasonSummary(

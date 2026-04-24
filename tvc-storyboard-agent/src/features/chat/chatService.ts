@@ -61,20 +61,38 @@ ${ch.content.slice(0, 800)}`
   return parts.join('\n\n');
 }
 
+type Part =
+  | { text: string }
+  | { inlineData: { mimeType: string; data: string } };
+
+function dataUrlToInlinePart(url: string): Part | null {
+  const m = url.match(/^data:(.*?);base64,(.+)$/);
+  if (!m || !m[2]) return null;
+  return { inlineData: { mimeType: m[1] ?? 'image/png', data: m[2] } };
+}
+
 export async function* streamChatReply(params: {
   messages: ChatMessage[];
   userInput: string;
   context: ChatContext;
+  attachmentDataUrls?: string[];
 }): AsyncGenerator<string, void, unknown> {
-  const { messages, userInput, context } = params;
+  const { messages, userInput, context, attachmentDataUrls = [] } = params;
   const ai = getGeminiClient();
 
-  const history = messages.map((m) => ({
-    role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
-    parts: [{ text: m.content }],
-  }));
+  const history: Array<{ role: 'user' | 'model'; parts: Part[] }> =
+    messages.map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
 
-  history.push({ role: 'user', parts: [{ text: userInput }] });
+  const lastParts: Part[] = [];
+  for (const url of attachmentDataUrls) {
+    const part = dataUrlToInlinePart(url);
+    if (part) lastParts.push(part);
+  }
+  lastParts.push({ text: userInput });
+  history.push({ role: 'user', parts: lastParts });
 
   const contextBlock = buildContextBlock(context);
   const systemInstruction =
