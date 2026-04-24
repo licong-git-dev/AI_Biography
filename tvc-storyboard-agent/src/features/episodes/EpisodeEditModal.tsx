@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { Episode, EpisodeFormat, EpisodeStatus, Priority } from '../../types';
 import { useEpisodeStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
+import { useModalSave } from '../../components/useModalSave';
 
 interface Props {
   episodeId: string | null;
@@ -78,17 +79,19 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
     if (open && episode) setForm(toForm(episode));
   }, [open, episode]);
 
+  const save = () => {
+    if (!episode || !form) return;
+    update(episode.id, fromForm(form));
+    onClose();
+  };
+
   useEscapeKey(open, onClose);
+  useModalSave(open && !!form, save);
 
   if (!open || !episode || !form) return null;
 
   const patch = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((prev) => (prev ? { ...prev, [k]: v } : prev));
-
-  const save = () => {
-    update(episode.id, fromForm(form));
-    onClose();
-  };
 
   return (
     <div

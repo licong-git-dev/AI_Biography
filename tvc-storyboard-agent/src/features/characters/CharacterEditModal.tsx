@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { AgeStage, Character, CharacterGroup } from '../../types';
 import { useCharacterStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
+import { useModalSave } from '../../components/useModalSave';
 
 interface Props {
   characterId: string | null;
@@ -88,17 +89,19 @@ const CharacterEditModal: React.FC<Props> = ({ characterId, open, onClose }) => 
     if (open && character) setForm(toForm(character));
   }, [open, character]);
 
+  const save = () => {
+    if (!character || !form) return;
+    update(character.id, fromForm(form));
+    onClose();
+  };
+
   useEscapeKey(open, onClose);
+  useModalSave(open && !!form, save);
 
   if (!open || !character || !form) return null;
 
   const patch = (k: keyof FormState, v: string) =>
     setForm((prev) => (prev ? { ...prev, [k]: v } : prev));
-
-  const save = () => {
-    update(character.id, fromForm(form));
-    onClose();
-  };
 
   return (
     <div

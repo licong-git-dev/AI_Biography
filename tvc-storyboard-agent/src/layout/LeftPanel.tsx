@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import { useCharacterStore, useChapterStore, useShotStore } from '../stores';
 import type { Character, CharacterGroup } from '../types';
 import CharacterEditModal from '../features/characters/CharacterEditModal';
@@ -37,6 +37,25 @@ const LeftPanel: React.FC = () => {
   const chaptersError = useChapterStore((s) => s.error);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filteredCharacters = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return characters;
+    return characters.filter((c) => {
+      const hay = [
+        c.name,
+        c.ageRange,
+        c.ageStage,
+        c.positioning,
+        c.vibe.join(' '),
+        c.outfits.join(' '),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [characters, search]);
 
   const handleAdd = () => {
     const blank = makeBlankCharacter();
@@ -81,7 +100,7 @@ const LeftPanel: React.FC = () => {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs uppercase tracking-wider text-neutral-500">
-              角色卡 ({characters.length})
+              角色卡 ({search ? `${filteredCharacters.length}/${characters.length}` : characters.length})
             </span>
             <button
               onClick={handleAdd}
@@ -92,9 +111,19 @@ const LeftPanel: React.FC = () => {
               <Plus size={10} /> 新角色
             </button>
           </div>
+          <div className="relative mb-2">
+            <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-600" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索角色名 / 气质 / 年龄"
+              className="w-full rounded border border-neutral-800 bg-neutral-900 pl-6 pr-2 py-1 text-[11px] text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+            />
+          </div>
           <div className="space-y-3">
             {GROUP_ORDER.map((group) => {
-              const items = characters.filter((c) => c.group === group);
+              const items = filteredCharacters.filter((c) => c.group === group);
               if (items.length === 0) return null;
               return (
                 <div key={group}>

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { Copy } from 'lucide-react';
 import type { Character } from '../../types';
 import { useCharacterStore, useUIStore } from '../../stores';
 import { generateCharacterReference } from './characterService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import { toast } from '../../stores/toastStore';
 
 interface Props {
   character: Character;
@@ -11,8 +13,22 @@ interface Props {
 
 const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
   const setReferenceImage = useCharacterStore((s) => s.setReferenceImage);
+  const addCharacter = useCharacterStore((s) => s.add);
+  const setActiveCharacter = useCharacterStore((s) => s.setActive);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const resetCharacter = useCharacterStore((s) => s.resetCharacter);
+
+  const handleDuplicate = () => {
+    const copy: Character = {
+      ...character,
+      id: `char-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      name: `${character.name}（副本）`,
+      referenceImageUrl: undefined, // 副本不继承已生成的参考图，省 localStorage
+    };
+    addCharacter(copy);
+    setActiveCharacter(copy.id);
+    toast.success(`已复制为「${copy.name}」，可在左栏编辑`);
+  };
 
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +39,7 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
     try {
       const url = await generateCharacterReference(character);
       setReferenceImage(character.id, url);
+      toast.success(`${character.name}：参考图已生成`);
     } catch (e) {
       if (e instanceof ApiKeyMissingError) {
         setError(e.message);
@@ -51,13 +68,23 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
               {character.ageRange}
             </div>
           </div>
-          <button
-            onClick={onEdit}
-            className="shrink-0 rounded border border-neutral-800 px-2 py-1 text-[10px] text-neutral-300 hover:border-neutral-700"
-            type="button"
-          >
-            编辑
-          </button>
+          <div className="flex shrink-0 gap-1">
+            <button
+              onClick={handleDuplicate}
+              className="flex items-center gap-0.5 rounded border border-neutral-800 px-2 py-1 text-[10px] text-neutral-300 hover:border-neutral-700"
+              type="button"
+              title="用本角色作模板，创建一个新的角色"
+            >
+              <Copy size={10} /> 复制
+            </button>
+            <button
+              onClick={onEdit}
+              className="rounded border border-neutral-800 px-2 py-1 text-[10px] text-neutral-300 hover:border-neutral-700"
+              type="button"
+            >
+              编辑
+            </button>
+          </div>
         </div>
 
         <p className="text-xs leading-relaxed text-neutral-300">

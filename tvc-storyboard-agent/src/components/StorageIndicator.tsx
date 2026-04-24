@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { estimateStorageUsage, evictBase64Images } from '../services/storageHealth';
+import { toast } from '../stores/toastStore';
 
 const StorageIndicator: React.FC = () => {
   const [health, setHealth] = useState(() => estimateStorageUsage());
@@ -27,7 +28,10 @@ const StorageIndicator: React.FC = () => {
     }
     const freed = evictBase64Images();
     setHealth(estimateStorageUsage());
-    alert(`已释放约 ${(freed / 1024 / 1024).toFixed(2)} MB。刷新页面以重新加载。`);
+    toast.success(
+      `已释放约 ${(freed / 1024 / 1024).toFixed(2)} MB。\n刷新页面以重新加载。`,
+      6000
+    );
   };
 
   return (

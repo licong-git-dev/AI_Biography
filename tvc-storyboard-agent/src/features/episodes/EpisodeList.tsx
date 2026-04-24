@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Pencil, Search, Trash2 } from 'lucide-react';
 import { useEpisodeStore, useShotStore } from '../../stores';
 import type { Priority } from '../../types';
 import EpisodeEditModal from './EpisodeEditModal';
@@ -20,6 +20,29 @@ const EpisodeList: React.FC = () => {
   const shots = useShotStore((s) => s.shots);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filteredEpisodes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return episodes;
+    return episodes.filter((e) => {
+      const hay = [
+        e.title,
+        e.mainConflict,
+        e.hook ?? '',
+        e.climax ?? '',
+        e.suspense ?? '',
+        e.memoryPoints.join(' '),
+        e.platformSellingPoint,
+        e.format,
+        e.status,
+        e.priority,
+      ]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [episodes, search]);
 
   const handleDelete = (id: string, title: string, shotCount: number) => {
     const msg =
@@ -33,8 +56,18 @@ const EpisodeList: React.FC = () => {
 
   return (
     <>
+      <div className="mb-3 relative">
+        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-600" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={`搜索集数（标题 / 记忆点 / 主冲突...）· ${search ? filteredEpisodes.length : episodes.length} 条`}
+          className="w-full rounded border border-neutral-800 bg-neutral-900 pl-7 pr-2 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+        />
+      </div>
       <div className="space-y-2">
-        {episodes.map((ep) => {
+        {filteredEpisodes.map((ep) => {
           const active = ep.id === activeId;
           const shotCount = shots.filter((s) => s.episodeId === ep.id).length;
 
@@ -113,6 +146,12 @@ const EpisodeList: React.FC = () => {
         {episodes.length === 0 && (
           <div className="rounded border border-dashed border-neutral-800 bg-neutral-900/30 p-6 text-center text-xs text-neutral-500">
             所有集数都删完了。切到「章节」tab 点一章「AI 拆集」重新生成。
+          </div>
+        )}
+
+        {episodes.length > 0 && filteredEpisodes.length === 0 && (
+          <div className="rounded border border-dashed border-neutral-800 bg-neutral-900/30 p-4 text-center text-xs text-neutral-500">
+            没有匹配「{search}」的集数
           </div>
         )}
       </div>

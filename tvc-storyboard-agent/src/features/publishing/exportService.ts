@@ -69,6 +69,107 @@ export async function exportEpisodeZip(params: {
   return zip.generateAsync({ type: 'blob' });
 }
 
+/**
+ * 把一季所有集打包成一个大 zip。每集一个子目录，跟 exportEpisodeZip 输出结构一致。
+ * 顶层加一份 season-summary.md 索引。
+ */
+export async function exportSeasonZip(params: {
+  seasonNumber: number;
+  seasonName: string;
+  episodes: Episode[];
+  allShots: Shot[];
+  characters: Character[];
+}): Promise<Blob> {
+  const { seasonNumber, seasonName, episodes, allShots, characters } = params;
+  const zip = new JSZip();
+  const root = zip.folder(`Season-${seasonNumber}-${safeSegment(seasonName)}`)!;
+
+  root.file('characters.md', buildCharactersMarkdown(characters));
+  root.file('season-summary.md', buildSeasonSummary(seasonName, episodes, allShots));
+
+  for (const ep of episodes) {
+    const slug = episodeSlug(ep);
+    const epFolder = root.folder(slug)!;
+    const shots = allShots.filter((s) => s.episodeId === ep.id);
+
+    epFolder.file('episode.md', buildEpisodeMarkdown(ep, shots, characters));
+    epFolder.file('shotlist.csv', buildShotlistCsv(shots, characters));
+    if (ep.publishingPack) {
+      epFolder.file(
+        'publishing.json',
+        JSON.stringify(ep.publishingPack, null, 2)
+      );
+    }
+
+    const shotsFolder = epFolder.folder('shots')!;
+    for (const shot of shots) {
+      const dir = shotsFolder.folder(safeSegment(shot.number))!;
+      if (shot.keyframeUrl) {
+        const { ext, data } = decodeDataUrl(shot.keyframeUrl);
+        dir.file(`keyframe.${ext || 'png'}`, data, { base64: true });
+      }
+      if (shot.videoUrl) {
+        const { ext, data } = decodeDataUrl(shot.videoUrl);
+        dir.file(`video.${ext || 'mp4'}`, data, { base64: true });
+      }
+      if (shot.voiceUrl) {
+        const { ext, data } = decodeDataUrl(shot.voiceUrl);
+        dir.file(`voice.${ext || 'wav'}`, data, { base64: true });
+      }
+      if (shot.prompt) dir.file('prompt.txt', shot.prompt);
+      if (shot.videoPrompt) dir.file('video-prompt.txt', shot.videoPrompt);
+    }
+  }
+
+  return zip.generateAsync({ type: 'blob' });
+}
+
+function buildSeasonSummary(
+  seasonName: string,
+  episodes: Episode[],
+  allShots: Shot[]
+): string {
+  const stats = episodes.map((ep) => {
+    const shots = allShots.filter((s) => s.episodeId === ep.id);
+    return {
+      ep,
+      total: shots.length,
+      keyframes: shots.filter((s) => s.keyframeUrl).length,
+      videos: shots.filter((s) => s.videoUrl).length,
+      voices: shots.filter((s) => s.voiceUrl).length,
+      hasPack: !!ep.publishingPack,
+    };
+  });
+
+  const totalShots = stats.reduce((a, s) => a + s.total, 0);
+  const totalKeyframes = stats.reduce((a, s) => a + s.keyframes, 0);
+  const totalVideos = stats.reduce((a, s) => a + s.videos, 0);
+  const totalVoices = stats.reduce((a, s) => a + s.voices, 0);
+  const packed = stats.filter((s) => s.hasPack).length;
+
+  return `# ${seasonName}
+
+> 全季导出时间：${new Date().toISOString()}
+> 集数：${episodes.length}
+> 镜头总数：${totalShots}
+> 已生成关键帧：${totalKeyframes}
+> 已生成视频：${totalVideos}
+> 已配音：${totalVoices}
+> 已生成平台文案：${packed}
+
+## 集数明细
+
+| EP | 标题 | 优先级 | 状态 | 镜头 | 关键帧 | 视频 | 配音 | 文案 |
+|----|------|--------|------|------|-------|------|------|------|
+${stats
+  .map((s) => {
+    const pad = String(s.ep.episodeNumber).padStart(2, '0');
+    return `| ${pad} | 《${s.ep.title}》 | ${s.ep.priority} | ${s.ep.status} | ${s.total} | ${s.keyframes} | ${s.videos} | ${s.voices} | ${s.hasPack ? '✓' : '—'} |`;
+  })
+  .join('\n')}
+`;
+}
+
 export function downloadBlob(blob: Blob, filename: string): void {
   if (typeof window === 'undefined') return;
   const url = URL.createObjectURL(blob);

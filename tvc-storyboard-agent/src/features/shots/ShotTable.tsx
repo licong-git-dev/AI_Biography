@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { ArrowUp, ArrowDown, Search, Trash2 } from 'lucide-react';
 import {
   useShotStore,
   useEpisodeStore,
@@ -70,9 +70,36 @@ const ShotTable: React.FC = () => {
   // 详情 modal
   const [detailShotId, setDetailShotId] = useState<string | null>(null);
 
-  const filteredShots = activeEpisodeId
+  // 搜索
+  const [search, setSearch] = useState('');
+
+  const episodeScoped = activeEpisodeId
     ? shots.filter((s) => s.episodeId === activeEpisodeId)
     : shots;
+
+  const filteredShots = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return episodeScoped;
+    return episodeScoped.filter((s) => {
+      const charNames = s.characters
+        .map((id) => getCharacter(id)?.name ?? id)
+        .join(' ');
+      const hay = [
+        s.number,
+        s.shotSize,
+        s.cameraMove ?? '',
+        s.description,
+        charNames,
+        s.narration ?? '',
+        s.dialogue ?? '',
+        s.audioNotes,
+        s.genMethod,
+      ]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [episodeScoped, search, getCharacter]);
 
   const activeEpisode = activeEpisodeId ? getEpisode(activeEpisodeId) : null;
 
@@ -268,6 +295,18 @@ const ShotTable: React.FC = () => {
 
   return (
     <div>
+      {/* 搜索框 */}
+      <div className="mb-3 relative">
+        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-600" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="搜索镜头（镜号 / 景别 / 画面 / 角色...）"
+          className="w-full rounded border border-neutral-800 bg-neutral-900 pl-7 pr-2 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:outline-none"
+        />
+      </div>
+
       {/* 顶部状态行 */}
       <div className="mb-3 flex items-center justify-between">
         <div className="text-xs text-neutral-400">
@@ -275,11 +314,11 @@ const ShotTable: React.FC = () => {
             <>
               当前过滤：EP
               {String(activeEpisode.episodeNumber).padStart(2, '0')}
-              《{activeEpisode.title}》· {filteredShots.length} 条镜头
+              《{activeEpisode.title}》· {filteredShots.length}/{episodeScoped.length} 条镜头
             </>
           ) : (
             <>
-              全部镜头 · {filteredShots.length} 条（「集数」tab 选中一集后过滤）
+              全部镜头 · {filteredShots.length}/{episodeScoped.length} 条（「集数」tab 选中一集后过滤）
             </>
           )}
         </div>

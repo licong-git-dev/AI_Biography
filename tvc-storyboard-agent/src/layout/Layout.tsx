@@ -5,6 +5,7 @@ import CenterPanel from './CenterPanel';
 import RightPanel from './RightPanel';
 import ApiKeyModal from '../components/ApiKeyModal';
 import OnboardingBanner from '../components/OnboardingBanner';
+import ToastContainer from '../components/ToastContainer';
 
 const Layout: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const Layout: React.FC = () => {
         </aside>
       </div>
       <ApiKeyModal />
+      <ToastContainer />
     </div>
   );
 };

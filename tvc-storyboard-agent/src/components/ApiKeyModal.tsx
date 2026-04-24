@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getApiKey, setApiKey } from '../services/apiKey';
 import { useUIStore } from '../stores';
 import { useEscapeKey } from './useEscapeKey';
+import { useModalSave } from './useModalSave';
 
 const ApiKeyModal: React.FC = () => {
   const open = useUIStore((s) => s.apiKeyModalOpen);
@@ -18,15 +19,16 @@ const ApiKeyModal: React.FC = () => {
     }
   }, [open]);
 
-  useEscapeKey(open, close);
-
-  if (!open) return null;
-
   const save = () => {
     setApiKey(value);
     refresh();
     close();
   };
+
+  useEscapeKey(open, close);
+  useModalSave(open, save);
+
+  if (!open) return null;
 
   const clear = () => {
     setValue('');

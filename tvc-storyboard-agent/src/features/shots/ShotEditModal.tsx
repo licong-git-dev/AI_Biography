@@ -7,6 +7,7 @@ import type {
 } from '../../types';
 import { useCharacterStore, useShotStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
+import { useModalSave } from '../../components/useModalSave';
 
 interface Props {
   shotId: string | null;
@@ -106,7 +107,14 @@ const ShotEditModal: React.FC<Props> = ({ shotId, open, onClose }) => {
     if (open && shot) setForm(toForm(shot));
   }, [open, shot]);
 
+  const save = () => {
+    if (!shot || !form) return;
+    update(shot.id, fromForm(form));
+    onClose();
+  };
+
   useEscapeKey(open, onClose);
+  useModalSave(open && !!form, save);
 
   if (!open || !shot || !form) return null;
 
@@ -121,11 +129,6 @@ const ShotEditModal: React.FC<Props> = ({ shotId, open, onClose }) => {
         : [...prev.characters, id];
       return { ...prev, characters: next };
     });
-  };
-
-  const save = () => {
-    update(shot.id, fromForm(form));
-    onClose();
   };
 
   return (
