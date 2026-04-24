@@ -178,14 +178,29 @@ const ShotTable: React.FC = () => {
 
   const handleBatchKeyframes = async () => {
     if (!activeEpisode || filteredShots.length === 0) return;
+    const ungenPreview = filteredShots.filter(
+      (s) => s.genStatus === '未生成' || s.genStatus === '失败'
+    );
+    if (ungenPreview.length === 0) return;
+    const estSec = ungenPreview.length * 30; // Nano Banana Pro ≈ 20-40s
+    const estMin = Math.ceil(estSec / 60);
+    if (
+      !confirm(
+        `批量生成 ${ungenPreview.length} 个关键帧
+• AI 调用：约 ${ungenPreview.length} 次（Nano Banana Pro）
+• 预计耗时：约 ${estMin} 分钟（每帧 20-40 秒，依账号速率）
+• 中间可随时点「中止帧」
+
+继续？`
+      )
+    )
+      return;
     setBatchSummary(null);
     setBatchRunning(true);
     const controller = new AbortController();
     batchAbortRef.current = controller;
     try {
-      const ungen = filteredShots.filter(
-        (s) => s.genStatus === '未生成' || s.genStatus === '失败'
-      );
+      const ungen = ungenPreview;
       setBatchProgress({ done: 0, total: ungen.length });
       let done = 0;
       const result = await generateKeyframesForShots({
@@ -236,22 +251,36 @@ const ShotTable: React.FC = () => {
 
   const handleBatchVoice = async () => {
     if (!activeEpisode || filteredShots.length === 0) return;
+    const targetsPreview = filteredShots.filter(
+      (s) =>
+        extractSpeechText(s) &&
+        (s.voiceGenStatus === '未生成' ||
+          s.voiceGenStatus === '失败' ||
+          !s.voiceGenStatus)
+    );
+    if (targetsPreview.length === 0) {
+      setVoiceSummary('没有可配音的镜头（要么已配好，要么没有旁白/对白）');
+      return;
+    }
+    const estSec = targetsPreview.length * 6; // TTS ≈ 4-8s
+    if (
+      !confirm(
+        `批量合成 ${targetsPreview.length} 条配音（声线：${voiceSpeaker}）
+• AI 调用：约 ${targetsPreview.length} 次（Gemini TTS）
+• 预计耗时：约 ${estSec} 秒
+• 单条镜头可后续在 ShotKeyframeModal 换声线
+
+继续？`
+      )
+    )
+      return;
+
     setVoiceSummary(null);
     setVoiceRunning(true);
     const controller = new AbortController();
     voiceAbortRef.current = controller;
     try {
-      const targets = filteredShots.filter(
-        (s) =>
-          extractSpeechText(s) &&
-          (s.voiceGenStatus === '未生成' ||
-            s.voiceGenStatus === '失败' ||
-            !s.voiceGenStatus)
-      );
-      if (targets.length === 0) {
-        setVoiceSummary('没有可配音的镜头（要么已配好，要么没有旁白/对白）');
-        return;
-      }
+      const targets = targetsPreview;
       setVoiceProgress({ done: 0, total: targets.length });
       let done = 0;
       const result = await generateVoiceForShots({

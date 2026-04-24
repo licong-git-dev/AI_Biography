@@ -96,3 +96,36 @@ export async function splitChapterIntoEpisodes(
 
   return validateEpisodeProposals(parsed);
 }
+
+/**
+ * 批量拆集：顺序处理多章。每章一次调用，中间可中止。
+ * onStart/onSuccess/onFailure 让 UI 能实时显示进度。
+ */
+export async function splitManyChapters(params: {
+  chapters: Chapter[];
+  targetPerChapter: number;
+  onStart: (chapterId: string) => void;
+  onSuccess: (chapterId: string, episodes: GeneratedEpisode[]) => void;
+  onFailure: (chapterId: string, error: string) => void;
+  signal?: AbortSignal;
+}): Promise<{ successCount: number; failCount: number; aborted: boolean }> {
+  const { chapters, targetPerChapter, onStart, onSuccess, onFailure, signal } =
+    params;
+  let successCount = 0;
+  let failCount = 0;
+  for (const chapter of chapters) {
+    if (signal?.aborted) return { successCount, failCount, aborted: true };
+    onStart(chapter.id);
+    try {
+      const episodes = await splitChapterIntoEpisodes(chapter, targetPerChapter);
+      onSuccess(chapter.id, episodes);
+      successCount++;
+    } catch (e) {
+      if (signal?.aborted) return { successCount, failCount, aborted: true };
+      const msg = e instanceof Error ? e.message : String(e);
+      onFailure(chapter.id, msg);
+      failCount++;
+    }
+  }
+  return { successCount, failCount, aborted: false };
+}

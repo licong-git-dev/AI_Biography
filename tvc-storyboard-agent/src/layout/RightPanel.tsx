@@ -9,6 +9,7 @@ import CharacterReferencePanel from '../features/characters/CharacterReferencePa
 import CharacterEditModal from '../features/characters/CharacterEditModal';
 import ChatPanel from '../features/chat/ChatPanel';
 import PublishingPanel from '../features/publishing/PublishingPanel';
+import HookWorkshop from '../features/episodes/HookWorkshop';
 
 type RightTab = 'context' | 'chat';
 
@@ -103,6 +104,8 @@ const RightPanel: React.FC = () => {
                     )}
                   </div>
                 )}
+
+                <HookWorkshop episode={activeEpisode} />
 
                 <div className="mt-3">
                   <div className="mb-1 text-[10px] uppercase tracking-wide text-neutral-500">
