@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
-import { useChapterStore, useEpisodeStore, useUIStore } from '../../stores';
+import React, { useRef, useState } from 'react';
+import { BookmarkPlus, Quote } from 'lucide-react';
+import {
+  useChapterStore,
+  useEpisodeStore,
+  useLibraryStore,
+  useUIStore,
+} from '../../stores';
 import type { Episode } from '../../types';
 import {
   splitChapterIntoEpisodes,
   type GeneratedEpisode,
 } from './chapterService';
+import {
+  extractPunchlines,
+  type PunchlineCandidate,
+} from './punchlineService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
+import { isAbortError } from '../../services/abort';
+import { toast } from '../../stores/toastStore';
+import Spinner from '../../components/Spinner';
 
 interface Props {
   chapterId: string;
@@ -28,6 +41,14 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
 
   const [targetCount, setTargetCount] = useState(3);
   const [proposals, setProposals] = useState<GeneratedEpisode[] | null>(null);
+
+  const addLibraryHook = useLibraryStore((s) => s.addHook);
+  const [punchlines, setPunchlines] = useState<PunchlineCandidate[] | null>(
+    null
+  );
+  const [punchlineBusy, setPunchlineBusy] = useState(false);
+  const [punchlineError, setPunchlineError] = useState<string | null>(null);
+  const punchAbortRef = useRef<AbortController | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +84,37 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleExtractPunchlines = async () => {
+    if (!chapter) return;
+    setPunchlineError(null);
+    setPunchlines(null);
+    setPunchlineBusy(true);
+    const controller = new AbortController();
+    punchAbortRef.current = controller;
+    try {
+      const result = await extractPunchlines(chapter, 8, controller.signal);
+      setPunchlines(result);
+    } catch (e) {
+      if (isAbortError(e)) setPunchlineError('已取消');
+      else if (e instanceof ApiKeyMissingError) {
+        setPunchlineError(e.message);
+        openApiKey();
+      } else setPunchlineError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPunchlineBusy(false);
+      punchAbortRef.current = null;
+    }
+  };
+
+  const saveToLibrary = (p: PunchlineCandidate) => {
+    addLibraryHook({
+      text: p.text,
+      style: p.mood,
+      why: p.why,
+    });
+    toast.success(`已收藏到资产库：${p.text.slice(0, 12)}…`);
   };
 
   const handleSaveAll = () => {
@@ -210,6 +262,82 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
                     value={p.memoryPoints.join(' · ')}
                   />
                   <Row label="平台卖点" value={p.platformSellingPoint} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 金句提取区 */}
+      <div className="mb-4 rounded-lg border border-amber-900/40 bg-amber-950/10 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-1.5 text-sm font-medium text-amber-200">
+              <Quote size={12} /> 金句提取
+            </div>
+            <div className="mt-0.5 text-[11px] text-neutral-500">
+              从本章挑出适合做字幕 / 封面文案 / 置顶评论的句子
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {punchlineBusy && (
+              <button
+                onClick={() => punchAbortRef.current?.abort()}
+                className="rounded border border-red-800 bg-red-950/30 px-2 py-1 text-[11px] text-red-300 hover:border-red-700"
+                type="button"
+              >
+                取消
+              </button>
+            )}
+            <button
+              onClick={handleExtractPunchlines}
+              disabled={punchlineBusy}
+              className="flex items-center gap-1 rounded bg-amber-700 px-3 py-1 text-[11px] font-medium text-amber-50 hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+            >
+              {punchlineBusy && <Spinner size={10} />}
+              {punchlineBusy
+                ? '提取中…'
+                : punchlines
+                  ? '重新提取'
+                  : '提取 8 条金句'}
+            </button>
+          </div>
+        </div>
+        {punchlineError && (
+          <div className="mt-2 rounded border border-red-900/50 bg-red-950/30 p-2 text-[11px] text-red-300">
+            {punchlineError}
+          </div>
+        )}
+        {punchlines && punchlines.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            {punchlines.map((p, idx) => (
+              <div
+                key={idx}
+                className="rounded border border-neutral-800 bg-neutral-900/60 p-2"
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] text-neutral-300">
+                    {p.mood}
+                  </span>
+                  <button
+                    onClick={() => saveToLibrary(p)}
+                    className="ml-auto rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-amber-300"
+                    type="button"
+                    title="收藏到资产库"
+                  >
+                    <BookmarkPlus size={10} />
+                  </button>
+                </div>
+                <div className="text-[13px] font-medium leading-relaxed text-neutral-100">
+                  {p.text}
+                </div>
+                <div className="mt-1 text-[10px] text-neutral-500">
+                  💡 {p.why}
+                </div>
+                <div className="mt-0.5 text-[10px] text-neutral-600">
+                  原文位置：…{p.contextHint}…
                 </div>
               </div>
             ))}
