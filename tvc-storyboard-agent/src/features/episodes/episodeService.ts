@@ -5,7 +5,11 @@ import type {
   CameraMove,
   GenMethod,
 } from '../../types';
-import { getGeminiClient, MODELS } from '../../services/geminiClient';
+import {
+  getGeminiClient,
+  MODELS,
+  thinkingConfigIfEnabled,
+} from '../../services/geminiClient';
 import { composeSystemPrompt } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
 import { recordCall } from '../../stores/statsStore';
@@ -144,6 +148,7 @@ export async function generateShotsForEpisode(params: {
     config: {
       systemInstruction: composeSystemPrompt(TASK_RULES),
       responseMimeType: 'application/json',
+      ...thinkingConfigIfEnabled(),
     },
   });
 

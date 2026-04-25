@@ -1,6 +1,10 @@
 import type { Episode, PublishingPack, PlatformCopy } from '../../types';
 import { PLATFORMS } from '../../types';
-import { getGeminiClient, MODELS } from '../../services/geminiClient';
+import {
+  getGeminiClient,
+  MODELS,
+  thinkingConfigIfEnabled,
+} from '../../services/geminiClient';
 import { SYSTEM_PROMPT_CORE } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
 import { recordCall } from '../../stores/statsStore';
@@ -67,6 +71,7 @@ export async function generatePublishingPack(
     config: {
       systemInstruction: SYSTEM_PROMPT_CORE,
       responseMimeType: 'application/json',
+      ...thinkingConfigIfEnabled(),
     },
   });
 

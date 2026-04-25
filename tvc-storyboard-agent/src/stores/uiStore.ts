@@ -27,6 +27,10 @@ interface UIStore {
   toggleKeyboardHints: () => void;
   openKeyboardHints: () => void;
   closeKeyboardHints: () => void;
+
+  /** 启用 Gemini thinking（深度思考）— 更慢更贵但结构化输出更稳 */
+  thinkingMode: boolean;
+  setThinkingMode: (on: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>()(
@@ -50,6 +54,9 @@ export const useUIStore = create<UIStore>()(
         set((s) => ({ keyboardHintsOpen: !s.keyboardHintsOpen })),
       openKeyboardHints: () => set({ keyboardHintsOpen: true }),
       closeKeyboardHints: () => set({ keyboardHintsOpen: false }),
+
+      thinkingMode: false,
+      setThinkingMode: (on) => set({ thinkingMode: on }),
     }),
     {
       name: 'licong-ui',
@@ -57,6 +64,7 @@ export const useUIStore = create<UIStore>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         onboardingDismissed: state.onboardingDismissed,
+        thinkingMode: state.thinkingMode,
       }),
     }
   )

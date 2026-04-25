@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookMarked, Keyboard, ShieldCheck } from 'lucide-react';
+import { BookMarked, Brain, Keyboard, ShieldCheck } from 'lucide-react';
 import { useUIStore } from '../stores';
 import StorageIndicator from '../components/StorageIndicator';
 import StatsIndicator from '../components/StatsIndicator';
@@ -11,6 +11,8 @@ const Header: React.FC = () => {
   const apiKeyPresent = useUIStore((s) => s.apiKeyPresent);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const openKeyboardHints = useUIStore((s) => s.openKeyboardHints);
+  const thinkingMode = useUIStore((s) => s.thinkingMode);
+  const setThinkingMode = useUIStore((s) => s.setThinkingMode);
   const [consistencyOpen, setConsistencyOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
 
@@ -26,6 +28,22 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-2">
         <StatsIndicator />
         <StorageIndicator />
+        <button
+          onClick={() => setThinkingMode(!thinkingMode)}
+          className={`rounded border p-1 transition ${
+            thinkingMode
+              ? 'border-violet-700 bg-violet-900/30 text-violet-200'
+              : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+          }`}
+          type="button"
+          title={
+            thinkingMode
+              ? '深度思考已开启（文本类 AI 会更慢但更稳，费用略高）。点击关闭'
+              : '开启 Gemini 深度思考：文本类 AI 输出更稳定，代价是每次调用更慢+费用略高'
+          }
+        >
+          <Brain size={12} />
+        </button>
         <button
           onClick={() => setConsistencyOpen(true)}
           className="rounded border border-neutral-800 p-1 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"

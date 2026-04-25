@@ -24,6 +24,28 @@ export function getGeminiClient(): GoogleGenAI {
   return new GoogleGenAI({ apiKey });
 }
 
+/**
+ * 如果用户在 UI 里打开了「深度思考」，返回可合并进 config 的 thinking 配置对象；
+ * 否则返回空对象。调用方：
+ *   config: { ...baseConfig, ...thinkingConfigIfEnabled() }
+ * SDK 版本若不支持 thinkingConfig 字段，运行时 Gemini 会忽略未知字段，不崩。
+ */
+export function thinkingConfigIfEnabled(): Record<string, unknown> {
+  try {
+    // 延迟 require 避免循环依赖
+    const { useUIStore } = require('../stores/uiStore') as typeof import('../stores/uiStore');
+    const on = useUIStore.getState().thinkingMode;
+    if (!on) return {};
+    return {
+      thinkingConfig: {
+        thinkingBudget: -1, // -1 = 模型自定，正数 = 预算 token 数
+      },
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function extractImageDataUrl(response: unknown): string | null {
   const r = response as {
     candidates?: Array<{
