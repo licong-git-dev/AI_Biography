@@ -78,20 +78,19 @@ const CenterPanel: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="shrink-0 border-b border-neutral-800 bg-neutral-950 px-6 pt-5 pb-3">
+      <header className="shrink-0 border-b border-ink-800 bg-gradient-to-b from-ink-900 to-ink-900/95 px-6 pt-5 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-neutral-100">
-              {SEASON_NAME}
-            </h1>
-            <p className="mt-1 text-xs text-neutral-500">
-              核心情绪：{SEASON_CORE_EMOTIONS.join(' · ')}
+            <h1 className="ip-title text-2xl text-sepia-100">{SEASON_NAME}</h1>
+            <div className="ornamental-rule mt-2 h-px w-32" />
+            <p className="mt-2 text-xs text-sepia-300/70">
+              核心情绪 · {SEASON_CORE_EMOTIONS.join(' · ')}
             </p>
           </div>
           <button
             onClick={handleExportSeason}
             disabled={exportingSeason || seasonOneEpisodes.length === 0}
-            className="flex items-center gap-1.5 rounded border border-neutral-700 px-2.5 py-1 text-[11px] font-medium text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800/50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-md border border-sepia-800/60 bg-sepia-900/20 px-3 py-1.5 text-[11px] font-medium text-sepia-200 transition hover:border-sepia-700 hover:bg-sepia-900/40 disabled:cursor-not-allowed disabled:opacity-40"
             type="button"
             title="把第一季所有集数打包成一个 zip"
           >
@@ -111,7 +110,7 @@ const CenterPanel: React.FC = () => {
           <StatCard label="镜头" value={shotCount} unit="条" />
         </div>
 
-        <div className="mt-4 flex items-end gap-1 border-b border-neutral-800/60">
+        <div className="mt-4 flex items-end gap-1 border-b border-ink-800/60">
           {TABS.map((t) => {
             const active = t.id === centerTab;
             return (
@@ -123,14 +122,14 @@ const CenterPanel: React.FC = () => {
                 }}
                 className={`relative px-3 py-2 text-sm transition ${
                   active
-                    ? 'text-neutral-100'
-                    : 'text-neutral-500 hover:text-neutral-300'
+                    ? 'font-medium text-sepia-100'
+                    : 'text-ink-300 hover:text-sepia-200'
                 }`}
                 type="button"
               >
                 {t.label}
                 {active && (
-                  <span className="absolute inset-x-3 -bottom-px h-0.5 bg-neutral-100" />
+                  <span className="absolute inset-x-3 -bottom-px h-0.5 bg-gradient-to-r from-transparent via-sepia-300 to-transparent" />
                 )}
               </button>
             );
@@ -165,13 +164,16 @@ const StatCard: React.FC<{
   value: number;
   unit: string;
 }> = ({ label, value, unit }) => (
-  <div className="rounded border border-neutral-800 bg-neutral-900/40 px-3 py-2">
-    <div className="text-[10px] uppercase tracking-wide text-neutral-500">
+  <div className="card-lift relative overflow-hidden rounded-lg border border-ink-800 bg-gradient-to-br from-ink-800/40 to-ink-900/40 px-3 py-2 hover:border-sepia-800/60">
+    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sepia-700/30 to-transparent" />
+    <div className="text-[10px] uppercase tracking-[0.15em] text-sepia-400/70">
       {label}
     </div>
     <div className="mt-0.5 flex items-baseline gap-1">
-      <span className="text-lg font-semibold text-neutral-100">{value}</span>
-      <span className="text-[11px] text-neutral-500">{unit}</span>
+      <span className="ip-title text-xl font-medium text-sepia-50">
+        {value}
+      </span>
+      <span className="text-[11px] text-ink-300">{unit}</span>
     </div>
   </div>
 );

@@ -22,18 +22,18 @@ const Layout: React.FC = () => {
   useGlobalSearchHotkey(openGlobalSearch);
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-neutral-950 text-neutral-100">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-ink-900 text-ink-100">
       <Header />
       <OnboardingBanner />
       <ReleaseReminderBanner />
       <div className="flex min-h-0 flex-1">
-        <aside className="scrollbar-thin w-1/4 min-w-[280px] overflow-y-auto border-r border-neutral-800">
+        <aside className="scrollbar-thin w-1/4 min-w-[280px] overflow-y-auto border-r border-ink-800/80 bg-ink-900/60">
           <LeftPanel />
         </aside>
-        <main className="flex min-h-0 flex-1 flex-col">
+        <main className="flex min-h-0 flex-1 flex-col bg-ink-900/40">
           <CenterPanel />
         </main>
-        <aside className="scrollbar-thin w-[30%] min-w-[320px] overflow-y-auto border-l border-neutral-800">
+        <aside className="scrollbar-thin w-[30%] min-w-[320px] overflow-y-auto border-l border-ink-800/80 bg-ink-900/60">
           <RightPanel />
         </aside>
       </div>

@@ -90,17 +90,20 @@ const LeftPanel: React.FC = () => {
     <>
       <div className="p-4 space-y-5">
         <div>
-          <div className="text-xs uppercase tracking-wider text-neutral-500 mb-2">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-sepia-400/70 mb-1">
             Project
           </div>
-          <div className="text-sm font-semibold">《李聪传》AI 短剧生产工作台</div>
-          <div className="text-xs text-neutral-400 mt-1">v0.1 · 全功能</div>
+          <div className="ip-title text-base text-sepia-100">《李聪传》</div>
+          <div className="ornamental-rule mt-1 h-px w-20" />
+          <div className="text-[11px] text-ink-300 mt-1.5">
+            AI 短剧生产工作台 · v0.1
+          </div>
         </div>
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wider text-neutral-500">
-              角色卡 ({search ? `${filteredCharacters.length}/${characters.length}` : characters.length})
+            <span className="text-[10px] uppercase tracking-[0.2em] text-sepia-400/70">
+              角色卡 · {search ? `${filteredCharacters.length}/${characters.length}` : characters.length}
             </span>
             <button
               onClick={handleAdd}

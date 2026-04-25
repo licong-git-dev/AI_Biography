@@ -34,10 +34,10 @@ const OnboardingBanner: React.FC = () => {
   if (step1Done && step2Done && step3Done) return null;
 
   return (
-    <div className="shrink-0 border-b border-sky-900/40 bg-sky-950/20 px-4 py-2">
+    <div className="shrink-0 border-b border-sepia-900/40 bg-gradient-to-r from-sepia-950/30 via-sepia-950/20 to-sepia-950/30 px-4 py-2">
       <div className="flex items-center gap-4">
         <div className="flex-1 flex items-center gap-4 overflow-x-auto">
-          <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-sky-300">
+          <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.15em] text-sepia-300">
             快速上手
           </span>
           <Step
@@ -88,18 +88,18 @@ const Step: React.FC<StepProps> = ({ n, done, label, hint, onClick }) => {
   const body = (
     <span className="flex items-center gap-1.5 whitespace-nowrap text-[11px]">
       {done ? (
-        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-800 text-emerald-100">
+        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-800/80 text-emerald-50 ring-1 ring-emerald-600/40">
           <Check size={10} strokeWidth={3} />
         </span>
       ) : (
-        <span className="flex h-4 w-4 items-center justify-center rounded-full border border-sky-700 text-[9px] font-medium text-sky-300">
+        <span className="flex h-4 w-4 items-center justify-center rounded-full border border-sepia-600 bg-sepia-900/40 text-[9px] font-medium text-sepia-200">
           {n}
         </span>
       )}
-      <span className={done ? 'text-neutral-400 line-through' : 'text-neutral-200'}>
+      <span className={done ? 'text-ink-400 line-through' : 'text-sepia-100'}>
         {label}
       </span>
-      {!done && <span className="text-[10px] text-neutral-500">· {hint}</span>}
+      {!done && <span className="text-[10px] text-sepia-400/70">· {hint}</span>}
     </span>
   );
 
@@ -107,7 +107,7 @@ const Step: React.FC<StepProps> = ({ n, done, label, hint, onClick }) => {
     return (
       <button
         onClick={onClick}
-        className="rounded px-1 py-0.5 hover:bg-sky-900/30"
+        className="rounded-md px-1.5 py-0.5 transition hover:bg-sepia-900/30"
         type="button"
       >
         {body}

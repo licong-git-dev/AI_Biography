@@ -5,18 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>《李聪传》AI 短剧生产工作台</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // 扩展 Tailwind 主题：温暖的怀旧色调 + 衬线字体
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              // 怀旧暖色系：从奶白到老纸沉淀色
+              sepia: {
+                50: '#faf6ef',
+                100: '#f4ecd8',
+                200: '#e8d8b0',
+                300: '#d9be84',
+                400: '#c89e58',
+                500: '#b07f3a',
+                600: '#92642d',
+                700: '#754f25',
+                800: '#5a3d20',
+                900: '#3d2916',
+                950: '#1f1209',
+              },
+              ink: {
+                50: '#f4f1ec',
+                100: '#e7e2da',
+                200: '#cdc4b6',
+                300: '#a89c89',
+                400: '#776a59',
+                500: '#544a3d',
+                600: '#3d352b',
+                700: '#2a241d',
+                800: '#1a1612',
+                900: '#0d0b09',
+              },
+            },
+            fontFamily: {
+              serif: [
+                '"Noto Serif SC"',
+                '"Source Han Serif SC"',
+                '"Songti SC"',
+                '"Source Han Serif CN"',
+                '"PingFang SC"',
+                'Georgia',
+                'serif',
+              ],
+              sans: [
+                '-apple-system',
+                'BlinkMacSystemFont',
+                '"PingFang SC"',
+                '"Microsoft YaHei"',
+                '"Segoe UI"',
+                'system-ui',
+                'sans-serif',
+              ],
+            },
+            boxShadow: {
+              'soft': '0 1px 3px 0 rgba(0,0,0,0.4), 0 1px 2px 0 rgba(0,0,0,0.3)',
+              'lift': '0 8px 24px -4px rgba(0,0,0,0.6), 0 4px 8px -2px rgba(0,0,0,0.4)',
+              'glow-amber': '0 0 0 1px rgba(217,190,132,0.2), 0 4px 12px -2px rgba(217,190,132,0.15)',
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       body, html, #root {
         height: 100%;
         margin: 0;
         overflow: hidden;
-        background-color: #0a0a0a;
-        /* Prevent browser pinch-to-zoom on the entire page */
+        background-color: #0d0b09;
+        background-image:
+          radial-gradient(ellipse at top, rgba(217,190,132,0.04) 0%, transparent 50%),
+          radial-gradient(ellipse at bottom right, rgba(146,100,45,0.03) 0%, transparent 50%);
+        background-attachment: fixed;
         touch-action: pan-x pan-y;
         -webkit-user-select: none;
         user-select: none;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+        color: #e7e2da;
       }
-      /* Custom Scrollbar for Chat */
+      /* Custom Scrollbar */
       .scrollbar-hide::-webkit-scrollbar {
           display: none;
       }
@@ -24,19 +97,54 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
-      /* Thin scrollbar for script */
       .scrollbar-thin::-webkit-scrollbar {
-          width: 4px;
+          width: 6px;
+          height: 6px;
       }
       .scrollbar-thin::-webkit-scrollbar-track {
           background: transparent;
       }
       .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #333;
-          border-radius: 2px;
+          background: rgba(168, 156, 137, 0.15);
+          border-radius: 3px;
       }
       .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #444;
+          background: rgba(217, 190, 132, 0.3);
+      }
+      /* 文本选中变成沉淀色 */
+      ::selection {
+        background-color: rgba(217, 190, 132, 0.3);
+        color: #f4ecd8;
+      }
+      /* 焦点环统一暖色 */
+      *:focus-visible {
+        outline: 2px solid rgba(217, 190, 132, 0.6);
+        outline-offset: 2px;
+      }
+      /* IP 标题专用 — 衬线粗体 + 字间距收紧 */
+      .ip-title {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+      /* 装饰横线（章节/标题下方） */
+      .ornamental-rule {
+        background: linear-gradient(
+          to right,
+          transparent 0%,
+          rgba(217, 190, 132, 0.4) 30%,
+          rgba(217, 190, 132, 0.6) 50%,
+          rgba(217, 190, 132, 0.4) 70%,
+          transparent 100%
+        );
+      }
+      /* 卡片 hover 升起 */
+      .card-lift {
+        transition: all 200ms ease-out;
+      }
+      .card-lift:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px -4px rgba(0,0,0,0.6), 0 4px 8px -2px rgba(0,0,0,0.4);
       }
       /* Cursor blink animation for streaming text */
       @keyframes cursor-blink {
@@ -46,22 +154,24 @@
       .animate-cursor-blink {
         animation: cursor-blink 0.8s ease-in-out infinite;
       }
-      /* Fade in animation for canvas nodes */
+      /* Fade in animation */
       @keyframes fade-in {
-        from {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
+        from { opacity: 0; transform: scale(0.98); }
+        to { opacity: 1; transform: scale(1); }
       }
       .animate-fade-in {
-        animation: fade-in 400ms ease-out forwards;
+        animation: fade-in 300ms ease-out forwards;
+      }
+      /* Sepia glow on hover for primary CTAs */
+      @keyframes warm-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(217, 190, 132, 0); }
+        50% { box-shadow: 0 0 0 4px rgba(217, 190, 132, 0.15); }
+      }
+      .animate-warm-pulse {
+        animation: warm-pulse 2s ease-in-out infinite;
       }
 
-      /* 尊重系统"减少动效"设置：关闭 spinner / pulse / fade 等动画 */
+      /* 尊重系统"减少动效"设置 */
       @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -78,23 +188,13 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Prevent browser zoom on Ctrl+wheel (Mac trackpad pinch triggers this)
+      // Prevent browser zoom on Ctrl+wheel
       document.addEventListener('wheel', function(e) {
-        if (e.ctrlKey) {
-          e.preventDefault();
-        }
+        if (e.ctrlKey) e.preventDefault();
       }, { passive: false });
-
-      // Prevent Safari gesture zoom
-      document.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
-      });
-      document.addEventListener('gesturechange', function(e) {
-        e.preventDefault();
-      });
-      document.addEventListener('gestureend', function(e) {
-        e.preventDefault();
-      });
+      document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+      document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+      document.addEventListener('gestureend', function(e) { e.preventDefault(); });
     </script>
   </body>
 </html>

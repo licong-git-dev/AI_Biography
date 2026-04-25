@@ -121,10 +121,10 @@ const EpisodeList: React.FC = () => {
           return (
             <div
               key={ep.id}
-              className={`group rounded-lg border transition ${
+              className={`group card-lift rounded-lg border transition ${
                 active
-                  ? 'border-neutral-600 bg-neutral-900'
-                  : 'border-neutral-800 bg-neutral-900/40 hover:border-neutral-700'
+                  ? 'border-sepia-700/60 bg-gradient-to-br from-sepia-950/40 to-ink-800 shadow-glow-amber'
+                  : 'border-ink-800 bg-ink-900/40 hover:border-sepia-800/40'
               }`}
             >
               <button
@@ -135,10 +135,10 @@ const EpisodeList: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-neutral-500">
+                      <span className="font-mono text-xs text-sepia-400/80">
                         EP{String(ep.episodeNumber).padStart(2, '0')}
                       </span>
-                      <span className="text-sm font-medium text-neutral-100">
+                      <span className="text-sm font-medium text-sepia-50">
                         《{ep.title}》
                       </span>
                       <span
