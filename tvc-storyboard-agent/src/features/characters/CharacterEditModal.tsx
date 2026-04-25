@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { AgeStage, Character, CharacterGroup } from '../../types';
 import { useCharacterStore } from '../../stores';
 import { useFocusTrap } from '../../components/useFocusTrap';
+import { SealMark } from '../../components/Ornaments';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useModalSave } from '../../components/useModalSave';
 
@@ -121,7 +122,8 @@ const CharacterEditModal: React.FC<Props> = ({ characterId, open, onClose }) => 
             <div className="text-[11px] uppercase tracking-wide text-neutral-500">
               {character.group} · {character.ageStage} · {character.ageRange}
             </div>
-            <h2 className="mt-0.5 text-lg font-semibold text-neutral-100">
+            <h2 className="mt-0.5 flex items-center gap-2 text-lg font-semibold text-sepia-100">
+              <SealMark size={14} className="text-sepia-500" />
               编辑角色卡
             </h2>
           </div>

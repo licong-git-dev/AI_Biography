@@ -6,6 +6,7 @@ import type {
   ShotSize,
 } from '../../types';
 import { useCharacterStore, useShotStore } from '../../stores';
+import { SealMark } from '../../components/Ornaments';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useModalSave } from '../../components/useModalSave';
 import { useFocusTrap } from '../../components/useFocusTrap';
@@ -152,10 +153,11 @@ const ShotEditModal: React.FC<Props> = ({ shotId, open, onClose }) => {
       >
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-neutral-500">
+            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-sepia-400/70">
+              <SealMark size={11} className="text-sepia-500" />
               编辑镜头信息
             </div>
-            <h2 className="mt-0.5 font-mono text-lg font-semibold text-neutral-100">
+            <h2 className="mt-0.5 font-mono text-lg font-semibold text-sepia-100">
               {shot.number}
             </h2>
           </div>

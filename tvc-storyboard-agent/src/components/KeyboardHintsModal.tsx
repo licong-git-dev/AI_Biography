@@ -3,6 +3,7 @@ import { Keyboard, X } from 'lucide-react';
 import { useUIStore } from '../stores';
 import { useEscapeKey } from './useEscapeKey';
 import { useFocusTrap } from './useFocusTrap';
+import { SealMark } from './Ornaments';
 
 interface Shortcut {
   keys: string[];
@@ -75,8 +76,9 @@ const KeyboardHintsModal: React.FC = () => {
       >
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <Keyboard size={16} className="text-neutral-400" />
-            <h2 className="text-base font-semibold text-neutral-100">快捷键</h2>
+            <SealMark size={14} className="text-sepia-500" />
+            <Keyboard size={14} className="text-sepia-400" />
+            <h2 className="text-base font-semibold text-sepia-100">快捷键</h2>
           </div>
           <button
             onClick={close}

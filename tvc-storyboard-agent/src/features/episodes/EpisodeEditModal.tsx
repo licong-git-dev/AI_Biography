@@ -3,6 +3,7 @@ import type { Episode, EpisodeFormat, EpisodeStatus, Priority } from '../../type
 import { useAlertsStore, useEpisodeStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useModalSave } from '../../components/useModalSave';
+import { SealMark } from '../../components/Ornaments';
 import { useFocusTrap } from '../../components/useFocusTrap';
 import { detectDownstreamAlerts } from '../consistency/alertService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
@@ -173,7 +174,8 @@ const EpisodeEditModal: React.FC<Props> = ({ episodeId, open, onClose }) => {
               S{episode.seasonNumber} · EP
               {String(episode.episodeNumber).padStart(2, '0')}
             </div>
-            <h2 className="mt-0.5 text-lg font-semibold text-neutral-100">
+            <h2 className="mt-0.5 flex items-center gap-2 text-lg font-semibold text-sepia-100">
+              <SealMark size={14} className="text-sepia-500" />
               编辑集数
             </h2>
           </div>

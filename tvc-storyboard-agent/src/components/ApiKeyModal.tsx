@@ -4,6 +4,7 @@ import { useUIStore } from '../stores';
 import { useEscapeKey } from './useEscapeKey';
 import { useModalSave } from './useModalSave';
 import { useFocusTrap } from './useFocusTrap';
+import { SealMark } from './Ornaments';
 
 const ApiKeyModal: React.FC = () => {
   const open = useUIStore((s) => s.apiKeyModalOpen);
@@ -50,7 +51,8 @@ const ApiKeyModal: React.FC = () => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4">
-          <h2 className="text-base font-semibold text-neutral-100">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-sepia-100">
+            <SealMark size={14} className="text-sepia-500" />
             配置 Gemini API Key
           </h2>
           <p className="mt-1 text-xs text-neutral-400">

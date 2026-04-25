@@ -3,6 +3,7 @@ import { BookMarked, Copy, Trash2, X } from 'lucide-react';
 import { useLibraryStore } from '../../stores';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useFocusTrap } from '../../components/useFocusTrap';
+import { SealMark } from '../../components/Ornaments';
 import { toast } from '../../stores/toastStore';
 
 interface Props {
@@ -46,8 +47,9 @@ const LibraryModal: React.FC<Props> = ({ open, onClose }) => {
       >
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <BookMarked size={16} className="text-amber-300" />
-            <h2 className="text-base font-semibold text-neutral-100">资产库</h2>
+            <SealMark size={14} className="text-sepia-500" />
+            <BookMarked size={14} className="text-sepia-400" />
+            <h2 className="text-base font-semibold text-sepia-100">资产库</h2>
           </div>
           <button
             onClick={onClose}

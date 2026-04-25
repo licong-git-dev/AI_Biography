@@ -15,6 +15,7 @@ import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import { useFocusTrap } from '../../components/useFocusTrap';
+import { SealMark } from '../../components/Ornaments';
 import Spinner from '../../components/Spinner';
 
 interface Props {
@@ -91,7 +92,8 @@ const ConsistencyModal: React.FC<Props> = ({ open, onClose }) => {
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-sky-300" />
             <div>
-              <h2 className="text-base font-semibold text-neutral-100">
+              <SealMark size={12} className="mb-1 text-sepia-500" />
+              <h2 className="text-base font-semibold text-sepia-100">
                 跨集一致性检查
               </h2>
               <div className="mt-0.5 text-[11px] text-neutral-500">
