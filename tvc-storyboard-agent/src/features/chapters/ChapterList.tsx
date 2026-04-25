@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { AlertCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { useChapterStore, useEpisodeStore, useUIStore } from '../../stores';
 import type { Episode } from '../../types';
 import { splitManyChapters } from './chapterService';
@@ -16,6 +16,7 @@ const ChapterList: React.FC<Props> = ({ onSelect }) => {
   const chapters = useChapterStore((s) => s.chapters);
   const loading = useChapterStore((s) => s.loading);
   const error = useChapterStore((s) => s.error);
+  const reloadChapters = useChapterStore((s) => s.load);
 
   const addMany = useEpisodeStore((s) => s.addMany);
   const nextEpisodeNumber = useEpisodeStore((s) => s.nextEpisodeNumber);
@@ -138,8 +139,38 @@ const ChapterList: React.FC<Props> = ({ onSelect }) => {
 
   if (error) {
     return (
-      <div className="rounded border border-red-900/50 bg-red-950/20 p-4 text-sm text-red-400">
-        加载失败：{error}
+      <div className="rounded border border-red-900/50 bg-red-950/20 p-4 text-sm">
+        <div className="mb-2 flex items-center gap-2 text-red-300">
+          <AlertCircle size={14} />
+          <span className="font-medium">章节加载失败</span>
+        </div>
+        <div className="mb-3 text-[11px] text-red-400/80">{error}</div>
+        <div className="text-[11px] text-neutral-500 mb-3">
+          可能是网络抖动 / public/data/ 路径出错 / 路由配置问题。
+        </div>
+        <button
+          onClick={() => void reloadChapters()}
+          className="flex items-center gap-1.5 rounded border border-red-800 bg-red-950/40 px-3 py-1.5 text-xs text-red-200 hover:border-red-700"
+          type="button"
+        >
+          <RefreshCw size={11} />
+          重试加载
+        </button>
+      </div>
+    );
+  }
+
+  if (!loading && chapters.length === 0) {
+    return (
+      <div className="rounded border border-amber-900/50 bg-amber-950/20 p-4 text-sm text-amber-300">
+        章节列表为空。可能是 public/data/chapters/*.md 没就位。
+        <button
+          onClick={() => void reloadChapters()}
+          className="ml-2 rounded border border-amber-800 px-2 py-0.5 text-[11px] hover:border-amber-700"
+          type="button"
+        >
+          重新加载
+        </button>
       </div>
     );
   }

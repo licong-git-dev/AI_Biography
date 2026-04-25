@@ -23,14 +23,14 @@ export const useChapterStore = create<ChapterStore>((set, get) => ({
   activeId: null,
 
   load: async () => {
-    if (get().loading || get().loaded) return;
+    if (get().loading) return;
     set({ loading: true, error: null });
     try {
       const chapters = await loadChapters();
-      set({ chapters, loading: false, loaded: true });
+      set({ chapters, loading: false, loaded: true, error: null });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      set({ loading: false, error: msg });
+      set({ loading: false, error: msg, loaded: false });
     }
   },
 
