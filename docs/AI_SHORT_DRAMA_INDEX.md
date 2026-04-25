@@ -23,7 +23,6 @@
 | [GitHub-Tooling-Selection.md](GitHub-Tooling-Selection.md) | ComfyUI / StoryDiffusion / GPT-SoVITS / Remotion 选型 |
 | [Execution-Task-Breakdown.md](Execution-Task-Breakdown.md) | 任务拆解、阶段划分、验收标准 |
 | [Next-Steps-Execution-Order.md](Next-Steps-Execution-Order.md) | 下一步执行顺序 |
-| [FINAL_STATUS_REPORT.md](FINAL_STATUS_REPORT.md) | 项目阶段性状态报告 |
 
 ---
 
@@ -87,7 +86,6 @@
 | [result/PDF/](../result/PDF/) | 9 章 PDF + 合集《李聪传.pdf》 |
 | [docx/](../docx/) | 出版指南 |
 | [music/](../music/) | 9 首角色主题曲歌词 |
-| [video/](../video/) | 批量提示词生成脚本（Python） |
 
 ---
 

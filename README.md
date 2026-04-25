@@ -42,7 +42,6 @@ AI_Biography/
 │   │   └── components/          # ApiKeyModal 等共用
 │   └── public/data/             # 章节 MD / 人物圣经 / 集数规划
 │
-├── video/                       # 分镜/提示词批量生成脚本（Python）
 └── .claude/                     # Claude Code 配置与 skill 包
     ├── prompts/
     └── skills/product-spec-builder/
