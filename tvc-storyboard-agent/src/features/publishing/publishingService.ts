@@ -5,6 +5,7 @@ import { SYSTEM_PROMPT_CORE } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
 import { recordCall } from '../../stores/statsStore';
 import { validatePublishingPlatforms } from '../../services/validate';
+import { buildBestPracticesContext } from '../../data/bestPractices';
 
 const PLATFORM_RULES = `
 【各平台文案风格】
@@ -15,7 +16,10 @@ const PLATFORM_RULES = `
 `;
 
 function buildPrompt(episode: Episode): string {
-  return `为下面这一集生成**所有 4 个平台**的发布文案包。
+  const best = buildBestPracticesContext('publishing');
+  return `${best}
+
+为下面这一集生成**所有 4 个平台**的发布文案包。
 
 【集信息】
 EP${String(episode.episodeNumber).padStart(2, '0')}《${episode.title}》

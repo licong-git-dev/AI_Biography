@@ -6,6 +6,7 @@ import { raceAbort } from '../../services/abort';
 import { recordCall } from '../../stores/statsStore';
 import { buildPriorMetricsContext } from '../publishing/metricsService';
 import { buildFeedbackContext } from '../../stores/feedbackStore';
+import { buildBestPracticesContext } from '../../data/bestPractices';
 
 export interface HookCandidate {
   text: string;
@@ -26,11 +27,13 @@ function buildPrompt(
   episode: Episode,
   count: number,
   priorMetrics: string | null,
-  feedbackContext: string | null
+  feedbackContext: string | null,
+  bestPractices: string | null
 ): string {
+  const bestBlock = bestPractices ? `${bestPractices}\n\n` : '';
   const metricsBlock = priorMetrics ? `${priorMetrics}\n\n` : '';
   const feedbackBlock = feedbackContext ? `${feedbackContext}\n\n` : '';
-  return `${feedbackBlock}${metricsBlock}为下面这一集生成 ${count} 个不同风格的开场钩子候选。
+  return `${bestBlock}${feedbackBlock}${metricsBlock}为下面这一集生成 ${count} 个不同风格的开场钩子候选。
 
 【集信息】
 EP${String(episode.episodeNumber).padStart(2, '0')}《${episode.title}》
@@ -71,7 +74,14 @@ export async function generateHookCandidates(
     priorEpisodes.filter((e) => e.id !== episode.id)
   );
   const feedbackContext = buildFeedbackContext('hook');
-  const prompt = buildPrompt(episode, count, priorMetrics, feedbackContext);
+  const bestPractices = buildBestPracticesContext('hook');
+  const prompt = buildPrompt(
+    episode,
+    count,
+    priorMetrics,
+    feedbackContext,
+    bestPractices
+  );
 
   recordCall('text');
   const response = await raceAbort(

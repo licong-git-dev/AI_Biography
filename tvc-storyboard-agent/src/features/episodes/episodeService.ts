@@ -10,6 +10,7 @@ import { composeSystemPrompt } from '../../services/systemPrompt';
 import { cleanJson } from '../../services/jsonUtils';
 import { recordCall } from '../../stores/statsStore';
 import { validateShotProposals } from '../../services/validate';
+import { buildBestPracticesContext } from '../../data/bestPractices';
 
 export interface GeneratedShot {
   number: string;
@@ -78,7 +79,10 @@ function buildPrompt(
     ? `\n【原章节节选（供参考）】\n${chapterExcerpt.slice(0, 3000)}\n`
     : '';
 
-  return `为下面这一集拆出镜头表。
+  const best = buildBestPracticesContext('shot');
+  return `${best}
+
+为下面这一集拆出镜头表。
 
 【集信息】
 - 标题：《${episode.title}》
