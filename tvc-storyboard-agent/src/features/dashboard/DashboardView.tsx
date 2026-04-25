@@ -1,11 +1,18 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  Lightbulb,
+  Sparkles,
+  ThumbsDown,
+  ThumbsUp,
+} from 'lucide-react';
 import {
   useCharacterStore,
   useEpisodeStore,
   useShotStore,
   useAlertsStore,
   useLibraryStore,
+  useFeedbackStore,
 } from '../../stores';
 import { useUIStore } from '../../stores';
 import { extractSpeechText } from '../audio/voiceService';
@@ -322,6 +329,165 @@ const DashboardView: React.FC = () => {
           sub="已保存"
         />
       </div>
+
+      <FeedbackInsights />
+    </div>
+  );
+};
+
+const FeedbackInsights: React.FC = () => {
+  const entries = useFeedbackStore((s) => s.entries);
+
+  const stats = useMemo(() => {
+    if (entries.length === 0) return null;
+
+    const byVerdict = { up: 0, down: 0, adopted: 0, rejected: 0 };
+    const styleTally: Record<string, { up: number; down: number }> = {};
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let recentWeek = 0;
+
+    for (const e of entries) {
+      byVerdict[e.verdict] = (byVerdict[e.verdict] ?? 0) + 1;
+      if (e.createdAt >= oneWeekAgo) recentWeek++;
+      const style = e.sample?.style;
+      if (style && (e.verdict === 'up' || e.verdict === 'adopted')) {
+        styleTally[style] = styleTally[style] ?? { up: 0, down: 0 };
+        styleTally[style]!.up++;
+      }
+      if (style && (e.verdict === 'down' || e.verdict === 'rejected')) {
+        styleTally[style] = styleTally[style] ?? { up: 0, down: 0 };
+        styleTally[style]!.down++;
+      }
+    }
+
+    const totalPositive = byVerdict.up + byVerdict.adopted;
+    const totalNegative = byVerdict.down + byVerdict.rejected;
+    const adoptionRate =
+      totalPositive + totalNegative > 0
+        ? Math.round((totalPositive / (totalPositive + totalNegative)) * 100)
+        : 0;
+
+    const topStyles = Object.entries(styleTally)
+      .map(([style, counts]) => ({
+        style,
+        score: counts.up - counts.down,
+        up: counts.up,
+        down: counts.down,
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    return {
+      total: entries.length,
+      byVerdict,
+      adoptionRate,
+      recentWeek,
+      topStyles,
+      totalPositive,
+      totalNegative,
+    };
+  }, [entries]);
+
+  if (!stats) {
+    return (
+      <div className="mt-4 rounded-lg border border-dashed border-neutral-800 bg-neutral-900/30 p-4 text-[11px] text-neutral-500">
+        <Lightbulb size={11} className="mr-1 inline text-neutral-600" />
+        用一段时间后，这里会展示你的 AI 口味画像（最常采用哪种风格、反馈趋势等）。
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
+      <div className="mb-3 flex items-baseline justify-between">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-neutral-200">
+          <Lightbulb size={12} className="text-amber-300" />
+          口味画像（反馈洞察）
+        </span>
+        <span className="text-[10px] text-neutral-500">
+          共 {stats.total} 条反馈 · 近 7 天 {stats.recentWeek} 条
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded border border-neutral-800 bg-neutral-900/40 p-2">
+          <div className="text-[10px] uppercase tracking-wide text-neutral-500">
+            正向
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <ThumbsUp size={10} className="text-emerald-400" />
+            <span className="font-semibold text-emerald-300">
+              {stats.totalPositive}
+            </span>
+            <span className="text-[10px] text-neutral-600">
+              / 采用 {stats.byVerdict.adopted}
+            </span>
+          </div>
+        </div>
+        <div className="rounded border border-neutral-800 bg-neutral-900/40 p-2">
+          <div className="text-[10px] uppercase tracking-wide text-neutral-500">
+            负向
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <ThumbsDown size={10} className="text-red-400" />
+            <span className="font-semibold text-red-300">
+              {stats.totalNegative}
+            </span>
+            <span className="text-[10px] text-neutral-600">
+              / 丢弃 {stats.byVerdict.rejected}
+            </span>
+          </div>
+        </div>
+        <div className="rounded border border-neutral-800 bg-neutral-900/40 p-2">
+          <div className="text-[10px] uppercase tracking-wide text-neutral-500">
+            采用率
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className="font-semibold text-neutral-100">
+              {stats.adoptionRate}%
+            </span>
+            <span className="text-[10px] text-neutral-500">
+              {stats.adoptionRate >= 60
+                ? '口味稳定'
+                : stats.adoptionRate >= 30
+                  ? '还在试'
+                  : '挑剔型'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {stats.topStyles.length > 0 && (
+        <div className="mt-3">
+          <div className="mb-1 text-[10px] uppercase tracking-wide text-neutral-500">
+            偏好风格 TOP 3
+          </div>
+          <div className="space-y-1">
+            {stats.topStyles.map((s, i) => (
+              <div
+                key={s.style}
+                className="flex items-center gap-2 text-[11px]"
+              >
+                <span className="w-6 font-mono text-neutral-600">
+                  #{i + 1}
+                </span>
+                <span className="flex-1 text-neutral-200">{s.style}</span>
+                <span className="font-mono text-[10px] text-emerald-400">
+                  +{s.up}
+                </span>
+                {s.down > 0 && (
+                  <span className="font-mono text-[10px] text-red-400">
+                    -{s.down}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] text-neutral-600">
+            这些偏好会注入到下次 AI 钩子生成的 prompt 里，让输出贴近你的口味。
+          </p>
+        </div>
+      )}
     </div>
   );
 };

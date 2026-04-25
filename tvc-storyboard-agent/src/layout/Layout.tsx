@@ -5,6 +5,7 @@ import CenterPanel from './CenterPanel';
 import RightPanel from './RightPanel';
 import ApiKeyModal from '../components/ApiKeyModal';
 import OnboardingBanner from '../components/OnboardingBanner';
+import ReleaseReminderBanner from '../components/ReleaseReminderBanner';
 import ToastContainer from '../components/ToastContainer';
 import KeyboardHintsModal from '../components/KeyboardHintsModal';
 import { useQuestionMarkKey } from '../components/useQuestionMarkKey';
@@ -18,6 +19,7 @@ const Layout: React.FC = () => {
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-neutral-950 text-neutral-100">
       <Header />
       <OnboardingBanner />
+      <ReleaseReminderBanner />
       <div className="flex min-h-0 flex-1">
         <aside className="scrollbar-thin w-1/4 min-w-[280px] overflow-y-auto border-r border-neutral-800">
           <LeftPanel />

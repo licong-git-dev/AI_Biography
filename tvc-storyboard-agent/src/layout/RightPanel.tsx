@@ -12,6 +12,7 @@ import PublishingPanel from '../features/publishing/PublishingPanel';
 import MetricsPanel from '../features/publishing/MetricsPanel';
 import CompliancePanel from '../features/publishing/CompliancePanel';
 import HookWorkshop from '../features/episodes/HookWorkshop';
+import EpisodeTimelinePreview from '../features/episodes/EpisodeTimelinePreview';
 import CommentsSection from '../components/CommentsSection';
 import type { Comment } from '../types';
 
@@ -110,6 +111,7 @@ const RightPanel: React.FC = () => {
                   </div>
                 )}
 
+                <EpisodeTimelinePreview episode={activeEpisode} />
                 <HookWorkshop episode={activeEpisode} />
                 <MetricsPanel episode={activeEpisode} />
 
