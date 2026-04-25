@@ -10,6 +10,7 @@ import {
 import { generateHookCandidates, type HookCandidate } from './hookService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
+import { humanizeError } from '../../services/errorMessages';
 import { toast } from '../../stores/toastStore';
 import Spinner from '../../components/Spinner';
 
@@ -51,14 +52,9 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
       );
       setCandidates(result);
     } catch (e) {
-      if (isAbortError(e)) {
-        setError('已取消');
-      } else if (e instanceof ApiKeyMissingError) {
-        setError(e.message);
-        openApiKey();
-      } else {
-        setError(e instanceof Error ? e.message : String(e));
-      }
+      const h = humanizeError(e);
+      if (e instanceof ApiKeyMissingError) openApiKey();
+      setError(h.aborted ? '已取消' : h.hint ? `${h.title}\n${h.hint}` : h.title);
     } finally {
       setGenerating(false);
       abortRef.current = null;

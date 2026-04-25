@@ -17,7 +17,7 @@ import {
 } from './punchlineService';
 import EmotionArcViz from './EmotionArcViz';
 import { ApiKeyMissingError } from '../../services/geminiClient';
-import { isAbortError } from '../../services/abort';
+import { humanizeError } from '../../services/errorMessages';
 import { toast } from '../../stores/toastStore';
 import Spinner from '../../components/Spinner';
 
@@ -76,12 +76,9 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
       const result = await splitChapterIntoEpisodes(chapter, targetCount);
       setProposals(result);
     } catch (e) {
-      if (e instanceof ApiKeyMissingError) {
-        setError(e.message);
-        openApiKey();
-      } else {
-        setError(e instanceof Error ? e.message : String(e));
-      }
+      const h = humanizeError(e);
+      if (e instanceof ApiKeyMissingError) openApiKey();
+      setError(h.aborted ? '已取消' : h.hint ? `${h.title}\n${h.hint}` : h.title);
     } finally {
       setGenerating(false);
     }
@@ -98,11 +95,11 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
       const result = await extractPunchlines(chapter, 8, controller.signal);
       setPunchlines(result);
     } catch (e) {
-      if (isAbortError(e)) setPunchlineError('已取消');
-      else if (e instanceof ApiKeyMissingError) {
-        setPunchlineError(e.message);
-        openApiKey();
-      } else setPunchlineError(e instanceof Error ? e.message : String(e));
+      const h = humanizeError(e);
+      if (e instanceof ApiKeyMissingError) openApiKey();
+      setPunchlineError(
+        h.aborted ? '已取消' : h.hint ? `${h.title}\n${h.hint}` : h.title
+      );
     } finally {
       setPunchlineBusy(false);
       punchAbortRef.current = null;

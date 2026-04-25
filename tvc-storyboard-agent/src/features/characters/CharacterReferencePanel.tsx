@@ -10,6 +10,7 @@ import {
 import { generateCharacterReference } from './characterService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
+import { humanizeError } from '../../services/errorMessages';
 import { toast } from '../../stores/toastStore';
 
 interface Props {
@@ -50,15 +51,9 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
       setReferenceImage(character.id, url);
       toast.success(`${character.name}：参考图已生成`);
     } catch (e) {
-      if (isAbortError(e)) {
-        setError('已取消');
-      } else if (e instanceof ApiKeyMissingError) {
-        setError(e.message);
-        openApiKey();
-      } else {
-        const msg = e instanceof Error ? e.message : String(e);
-        setError(msg);
-      }
+      const h = humanizeError(e);
+      if (e instanceof ApiKeyMissingError) openApiKey();
+      setError(h.aborted ? '已取消' : h.hint ? `${h.title}\n${h.hint}` : h.title);
     } finally {
       setGenerating(false);
       abortRef.current = null;
