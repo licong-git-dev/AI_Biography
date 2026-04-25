@@ -3,15 +3,20 @@ import { getApiKey } from './apiKey';
 
 export type ModelKind = 'TEXT' | 'FAST' | 'VISION' | 'IMAGE' | 'VIDEO' | 'TTS' | 'STT';
 
-/** 默认模型 ID 表。用户可在设置里改写。 */
+/**
+ * 默认模型 ID 表。已切到通用账号大概率开通的 stable 别名。
+ * 用户可在 Header ⚙ 模型设置里改成自己账号有权限的 ID。
+ *
+ * 验证基线：gemini-flash-latest 通过 v1beta generateContent 直连可用。
+ */
 export const DEFAULT_MODELS: Record<ModelKind, string> = {
-  TEXT: 'gemini-3-pro-preview',
-  FAST: 'gemini-3-flash-preview',
-  VISION: 'gemini-3-pro-preview',
-  IMAGE: 'gemini-3-pro-image-preview', // Nano Banana Pro
-  VIDEO: 'veo-3.0-generate-preview', // Veo 3 image-to-video
+  TEXT: 'gemini-flash-latest', // 主结构化任务（拆集 / 镜头表 / 文案）
+  FAST: 'gemini-flash-latest', // 快速任务备用
+  VISION: 'gemini-flash-latest', // 多模态视觉理解
+  IMAGE: 'gemini-2.5-flash-image-preview', // 标准 Nano Banana（如开通了 Pro 改成 gemini-3-pro-image-preview）
+  VIDEO: 'veo-3.0-generate-preview', // Veo 3 普通账号大概率没开通，需要去 Cloud 申请
   TTS: 'gemini-2.5-flash-preview-tts',
-  STT: 'gemini-3-pro-preview',
+  STT: 'gemini-flash-latest',
 };
 
 /**
