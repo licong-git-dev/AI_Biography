@@ -1,15 +1,36 @@
 import { GoogleGenAI } from '@google/genai';
 import { getApiKey } from './apiKey';
 
-export const MODELS = {
+export type ModelKind = 'TEXT' | 'FAST' | 'VISION' | 'IMAGE' | 'VIDEO' | 'TTS' | 'STT';
+
+/** 默认模型 ID 表。用户可在设置里改写。 */
+export const DEFAULT_MODELS: Record<ModelKind, string> = {
   TEXT: 'gemini-3-pro-preview',
   FAST: 'gemini-3-flash-preview',
   VISION: 'gemini-3-pro-preview',
   IMAGE: 'gemini-3-pro-image-preview', // Nano Banana Pro
   VIDEO: 'veo-3.0-generate-preview', // Veo 3 image-to-video
-  TTS: 'gemini-2.5-flash-preview-tts', // 语音合成
-  STT: 'gemini-3-pro-preview', // 转写（走 vision/audio 理解）
-} as const;
+  TTS: 'gemini-2.5-flash-preview-tts',
+  STT: 'gemini-3-pro-preview',
+};
+
+/**
+ * 当前用户配置的模型 ID。每次访问都从 modelStore 读，没配置时落到默认。
+ * Proxy 让代码以 MODELS.TEXT 形式访问，运行时返回最新值。
+ */
+export const MODELS = new Proxy(DEFAULT_MODELS, {
+  get(target, prop: string) {
+    if (typeof prop !== 'string' || !(prop in target)) return undefined;
+    try {
+      const { useModelStore } = require('../stores/modelStore') as typeof import('../stores/modelStore');
+      const override = useModelStore.getState().overrides[prop as ModelKind];
+      if (override && override.length > 0) return override;
+    } catch {
+      // store 未初始化（首次加载或测试）→ 走默认
+    }
+    return target[prop as ModelKind];
+  },
+}) as Record<ModelKind, string>;
 
 export class ApiKeyMissingError extends Error {
   constructor() {

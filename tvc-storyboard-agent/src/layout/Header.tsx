@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { BookMarked, Brain, Keyboard, Search, ShieldCheck } from 'lucide-react';
+import {
+  BookMarked,
+  Brain,
+  Cog,
+  Keyboard,
+  Search,
+  ShieldCheck,
+} from 'lucide-react';
+import ModelSettingsModal from '../features/settings/ModelSettingsModal';
 import { useUIStore } from '../stores';
 import StorageIndicator from '../components/StorageIndicator';
 import StatsIndicator from '../components/StatsIndicator';
@@ -16,6 +24,7 @@ const Header: React.FC = () => {
   const setThinkingMode = useUIStore((s) => s.setThinkingMode);
   const [consistencyOpen, setConsistencyOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [modelSettingsOpen, setModelSettingsOpen] = useState(false);
 
   return (
     <header className="flex h-10 items-center justify-between border-b border-neutral-800 bg-neutral-950 px-4">
@@ -38,6 +47,14 @@ const Header: React.FC = () => {
         </button>
         <StatsIndicator />
         <StorageIndicator />
+        <button
+          onClick={() => setModelSettingsOpen(true)}
+          className="rounded border border-neutral-800 p-1 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+          type="button"
+          title="模型设置（自定义模型 ID）"
+        >
+          <Cog size={12} />
+        </button>
         <button
           onClick={() => setThinkingMode(!thinkingMode)}
           className={`rounded border p-1 transition ${
@@ -97,6 +114,10 @@ const Header: React.FC = () => {
         onClose={() => setConsistencyOpen(false)}
       />
       <LibraryModal open={libraryOpen} onClose={() => setLibraryOpen(false)} />
+      <ModelSettingsModal
+        open={modelSettingsOpen}
+        onClose={() => setModelSettingsOpen(false)}
+      />
     </header>
   );
 };
