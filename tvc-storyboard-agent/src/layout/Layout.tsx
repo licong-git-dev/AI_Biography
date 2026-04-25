@@ -9,11 +9,17 @@ import ReleaseReminderBanner from '../components/ReleaseReminderBanner';
 import ToastContainer from '../components/ToastContainer';
 import KeyboardHintsModal from '../components/KeyboardHintsModal';
 import { useQuestionMarkKey } from '../components/useQuestionMarkKey';
+import { useGlobalSearchHotkey } from '../components/useGlobalSearchHotkey';
+import GlobalSearchModal from '../components/GlobalSearchModal';
 import { useUIStore } from '../stores';
 
 const Layout: React.FC = () => {
   const toggleKeyboardHints = useUIStore((s) => s.toggleKeyboardHints);
+  const openGlobalSearch = useUIStore((s) => s.openGlobalSearch);
+  const closeGlobalSearch = useUIStore((s) => s.closeGlobalSearch);
+  const globalSearchOpen = useUIStore((s) => s.globalSearchOpen);
   useQuestionMarkKey(toggleKeyboardHints);
+  useGlobalSearchHotkey(openGlobalSearch);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-neutral-950 text-neutral-100">
@@ -33,6 +39,10 @@ const Layout: React.FC = () => {
       </div>
       <ApiKeyModal />
       <KeyboardHintsModal />
+      <GlobalSearchModal
+        open={globalSearchOpen}
+        onClose={closeGlobalSearch}
+      />
       <ToastContainer />
     </div>
   );

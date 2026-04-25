@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookMarked, Brain, Keyboard, ShieldCheck } from 'lucide-react';
+import { BookMarked, Brain, Keyboard, Search, ShieldCheck } from 'lucide-react';
 import { useUIStore } from '../stores';
 import StorageIndicator from '../components/StorageIndicator';
 import StatsIndicator from '../components/StatsIndicator';
@@ -11,6 +11,7 @@ const Header: React.FC = () => {
   const apiKeyPresent = useUIStore((s) => s.apiKeyPresent);
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const openKeyboardHints = useUIStore((s) => s.openKeyboardHints);
+  const openGlobalSearch = useUIStore((s) => s.openGlobalSearch);
   const thinkingMode = useUIStore((s) => s.thinkingMode);
   const setThinkingMode = useUIStore((s) => s.setThinkingMode);
   const [consistencyOpen, setConsistencyOpen] = useState(false);
@@ -26,6 +27,15 @@ const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          onClick={openGlobalSearch}
+          className="flex items-center gap-1 rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+          type="button"
+          title="全局搜索（Ctrl/⌘ + /）"
+        >
+          <Search size={11} />
+          <span className="font-mono text-[10px] text-neutral-600">⌘/</span>
+        </button>
         <StatsIndicator />
         <StorageIndicator />
         <button

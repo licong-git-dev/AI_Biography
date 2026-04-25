@@ -19,6 +19,7 @@ const SECTIONS: Section[] = [
     title: '全局',
     items: [
       { keys: ['?'], label: '打开/关闭快捷键列表' },
+      { keys: ['Ctrl/⌘', '/'], label: '全局搜索（角色/集/镜头/章节/资产）' },
       { keys: ['Esc'], label: '关闭当前弹窗' },
     ],
   },

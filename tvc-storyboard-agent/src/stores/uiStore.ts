@@ -31,6 +31,10 @@ interface UIStore {
   /** 启用 Gemini thinking（深度思考）— 更慢更贵但结构化输出更稳 */
   thinkingMode: boolean;
   setThinkingMode: (on: boolean) => void;
+
+  globalSearchOpen: boolean;
+  openGlobalSearch: () => void;
+  closeGlobalSearch: () => void;
 }
 
 export const useUIStore = create<UIStore>()(
@@ -57,6 +61,10 @@ export const useUIStore = create<UIStore>()(
 
       thinkingMode: false,
       setThinkingMode: (on) => set({ thinkingMode: on }),
+
+      globalSearchOpen: false,
+      openGlobalSearch: () => set({ globalSearchOpen: true }),
+      closeGlobalSearch: () => set({ globalSearchOpen: false }),
     }),
     {
       name: 'licong-ui',
