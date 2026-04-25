@@ -140,7 +140,10 @@ const CenterPanel: React.FC = () => {
         </div>
       </header>
 
-      <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
+      <div
+        key={centerTab + (chapterDetailId ?? '')}
+        className="scrollbar-thin animate-tab-fade flex-1 overflow-y-auto p-6"
+      >
         {centerTab === 'episodes' && <EpisodeList />}
         {centerTab === 'chapters' &&
           (chapterDetailId ? (

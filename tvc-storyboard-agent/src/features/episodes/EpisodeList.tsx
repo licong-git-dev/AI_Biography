@@ -110,18 +110,19 @@ const EpisodeList: React.FC = () => {
         )}
       </div>
       <div className="space-y-2">
-        {filteredEpisodes.map((ep) => {
+        {filteredEpisodes.map((ep, idx) => {
           const active = ep.id === activeId;
           const shotCount = shots.filter((s) => s.episodeId === ep.id).length;
           const epAlerts = alerts.filter(
             (a) => a.affectedEpisodeId === ep.id && !a.acknowledged
           );
           const hasCritical = epAlerts.some((a) => a.severity === 'critical');
+          const staggerCls = idx <= 8 ? `stagger-${idx + 1}` : '';
 
           return (
             <div
               key={ep.id}
-              className={`group card-lift rounded-lg border transition ${
+              className={`group card-lift animate-fade-up rounded-lg border transition ${staggerCls} ${
                 active
                   ? 'border-sepia-700/60 bg-gradient-to-br from-sepia-950/40 to-ink-800 shadow-glow-amber'
                   : 'border-ink-800 bg-ink-900/40 hover:border-sepia-800/40'

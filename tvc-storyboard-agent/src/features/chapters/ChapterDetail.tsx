@@ -16,6 +16,10 @@ import {
   type PunchlineCandidate,
 } from './punchlineService';
 import EmotionArcViz from './EmotionArcViz';
+import {
+  ChapterHeadingOrnament,
+  CornerFlourish,
+} from '../../components/Ornaments';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { humanizeError } from '../../services/errorMessages';
 import { toast } from '../../stores/toastStore';
@@ -154,13 +158,14 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
         ← 返回章节列表
       </button>
 
-      <div className="mb-4 border-b border-neutral-800 pb-3">
-        <div className="font-mono text-xs text-neutral-500">
+      <div className="mb-4 pb-3 text-center">
+        <div className="font-mono text-[11px] tracking-[0.2em] text-sepia-400/70">
           第 {chapter.number} 章 · {chapter.wordCount.toLocaleString()} 字
         </div>
-        <h2 className="mt-1 text-lg font-semibold text-neutral-100">
-          《{chapter.title}》
+        <h2 className="ip-title mt-1.5 text-2xl text-sepia-100">
+          {chapter.title}
         </h2>
+        <ChapterHeadingOrnament className="mt-2 text-sepia-600/60" />
       </div>
 
       {/* AI 拆集 控制区 */}
@@ -346,9 +351,41 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
         )}
       </div>
 
-      {/* 章节正文 */}
-      <article className="scrollbar-thin max-h-[calc(100vh-400px)] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
-        {chapter.content}
+      {/* 章节正文 — 古籍页面样式 */}
+      <article className="classical-page scrollbar-thin relative max-h-[calc(100vh-400px)] overflow-y-auto rounded-lg border border-sepia-900/30 bg-gradient-to-br from-sepia-950/15 via-ink-900/40 to-sepia-950/10 p-6">
+        <CornerFlourish
+          size={20}
+          className="absolute left-2 top-2 text-sepia-700/40"
+        />
+        <CornerFlourish
+          size={20}
+          className="absolute right-2 top-2 -scale-x-100 text-sepia-700/40"
+        />
+        <CornerFlourish
+          size={20}
+          className="absolute left-2 bottom-2 -scale-y-100 text-sepia-700/40"
+        />
+        <CornerFlourish
+          size={20}
+          className="absolute right-2 bottom-2 -scale-100 text-sepia-700/40"
+        />
+
+        {chapter.content
+          .split(/\n\s*\n/)
+          .filter((p) => p.trim())
+          .map((para, i) => (
+            <p
+              key={i}
+              className={`font-serif text-[15px] leading-[1.95] text-sepia-100/90 ${i === 0 ? 'drop-cap' : ''}`}
+              style={{ textIndent: i === 0 ? '0' : '2em', marginBottom: '1em' }}
+            >
+              {para.trim()}
+            </p>
+          ))}
+
+        <div className="mt-4 text-center text-[11px] text-sepia-500/40">
+          —— 完 ——
+        </div>
       </article>
     </div>
   );
