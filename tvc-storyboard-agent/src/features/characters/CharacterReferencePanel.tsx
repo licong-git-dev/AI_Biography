@@ -1,7 +1,12 @@
-import React, { useRef, useState } from 'react';
-import { Copy } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { BarChart3, Copy } from 'lucide-react';
 import type { Character } from '../../types';
-import { useCharacterStore, useUIStore } from '../../stores';
+import {
+  useCharacterStore,
+  useEpisodeStore,
+  useShotStore,
+  useUIStore,
+} from '../../stores';
 import { generateCharacterReference } from './characterService';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
@@ -117,6 +122,8 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
         </div>
       </div>
 
+      <CharacterScreenTime characterId={character.id} />
+
       <div>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-wide text-neutral-500">
@@ -198,6 +205,80 @@ const CharacterReferencePanel: React.FC<Props> = ({ character, onEdit }) => {
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const CharacterScreenTime: React.FC<{ characterId: string }> = ({
+  characterId,
+}) => {
+  const shots = useShotStore((s) => s.shots);
+  const episodes = useEpisodeStore((s) => s.episodes);
+
+  const stats = useMemo(() => {
+    const involvedShots = shots.filter((s) =>
+      s.characters.includes(characterId)
+    );
+    const episodeIds = new Set(involvedShots.map((s) => s.episodeId));
+    const totalSeconds = involvedShots.reduce((a, s) => a + s.duration, 0);
+    const involvedEpisodes = episodes
+      .filter((e) => episodeIds.has(e.id))
+      .sort((a, b) => a.episodeNumber - b.episodeNumber);
+    return {
+      shotCount: involvedShots.length,
+      episodeCount: episodeIds.size,
+      totalSeconds,
+      involvedEpisodes,
+    };
+  }, [shots, episodes, characterId]);
+
+  return (
+    <div>
+      <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-neutral-500">
+        <BarChart3 size={10} /> 戏份统计
+      </div>
+      {stats.shotCount === 0 ? (
+        <div className="rounded border border-amber-900/50 bg-amber-950/20 p-2 text-[10px] text-amber-300">
+          ⚠️ 该角色在所有镜头里都没出场。可能是孤儿角色卡，可考虑删除或检查
+          ID 引用。
+        </div>
+      ) : (
+        <div className="rounded border border-neutral-800 bg-neutral-900/40 p-2">
+          <div className="flex items-baseline gap-3 text-[11px]">
+            <span>
+              <span className="font-semibold text-neutral-100">
+                {stats.episodeCount}
+              </span>
+              <span className="ml-0.5 text-neutral-500">集</span>
+            </span>
+            <span>
+              <span className="font-semibold text-neutral-100">
+                {stats.shotCount}
+              </span>
+              <span className="ml-0.5 text-neutral-500">镜头</span>
+            </span>
+            <span>
+              <span className="font-semibold text-neutral-100">
+                ~{stats.totalSeconds}
+              </span>
+              <span className="ml-0.5 text-neutral-500">秒</span>
+            </span>
+          </div>
+          {stats.involvedEpisodes.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {stats.involvedEpisodes.map((e) => (
+                <span
+                  key={e.id}
+                  className="rounded bg-neutral-800 px-1 py-0.5 font-mono text-[9px] text-neutral-300"
+                  title={`《${e.title}》`}
+                >
+                  EP{String(e.episodeNumber).padStart(2, '0')}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

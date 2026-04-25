@@ -17,6 +17,7 @@ import {
 import { useUIStore } from '../../stores';
 import { extractSpeechText } from '../audio/voiceService';
 import ProductionPacingCard from './ProductionPacingCard';
+import CharacterBalanceCard from './CharacterBalanceCard';
 
 const DashboardView: React.FC = () => {
   const characters = useCharacterStore((s) => s.characters);
@@ -332,6 +333,7 @@ const DashboardView: React.FC = () => {
       </div>
 
       <ProductionPacingCard />
+      <CharacterBalanceCard />
       <FeedbackInsights />
     </div>
   );
