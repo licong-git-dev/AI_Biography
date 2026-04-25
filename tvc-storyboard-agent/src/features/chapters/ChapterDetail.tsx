@@ -15,6 +15,7 @@ import {
   extractPunchlines,
   type PunchlineCandidate,
 } from './punchlineService';
+import EmotionArcViz from './EmotionArcViz';
 import { ApiKeyMissingError } from '../../services/geminiClient';
 import { isAbortError } from '../../services/abort';
 import { toast } from '../../stores/toastStore';
@@ -268,6 +269,9 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
           </div>
         )}
       </div>
+
+      {/* 情绪曲线 */}
+      <EmotionArcViz chapter={chapter} />
 
       {/* 金句提取区 */}
       <div className="mb-4 rounded-lg border border-amber-900/40 bg-amber-950/10 p-4">
