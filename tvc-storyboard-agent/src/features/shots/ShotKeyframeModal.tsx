@@ -22,6 +22,7 @@ import CommentsSection from '../../components/CommentsSection';
 import type { Comment } from '../../types';
 import { useEscapeKey } from '../../components/useEscapeKey';
 import ShotEditModal from './ShotEditModal';
+import SubtitleEditor from './SubtitleEditor';
 
 interface Props {
   shotId: string | null;
@@ -488,9 +489,18 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
                 </div>
               </div>
               {shot.subtitleSrt && (
-                <pre className="scrollbar-thin max-h-32 overflow-y-auto whitespace-pre-wrap rounded border border-neutral-800 bg-neutral-900/60 p-2 font-mono text-[10px] leading-relaxed text-neutral-300">
-                  {shot.subtitleSrt}
-                </pre>
+                <>
+                  <pre className="scrollbar-thin max-h-32 overflow-y-auto whitespace-pre-wrap rounded border border-neutral-800 bg-neutral-900/60 p-2 font-mono text-[10px] leading-relaxed text-neutral-300">
+                    {shot.subtitleSrt}
+                  </pre>
+                  <div className="mt-1.5 flex justify-end">
+                    <SubtitleEditor
+                      shotId={shot.id}
+                      srt={shot.subtitleSrt}
+                      shotDuration={shot.duration}
+                    />
+                  </div>
+                </>
               )}
             </div>
           )}
