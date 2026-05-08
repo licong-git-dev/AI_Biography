@@ -13,6 +13,7 @@ import { isAbortError } from '../../services/abort';
 import { humanizeError } from '../../services/errorMessages';
 import { toast } from '../../stores/toastStore';
 import Spinner from '../../components/Spinner';
+import SealStamp from '../../components/SealStamp';
 
 interface Props {
   episode: Episode;
@@ -34,6 +35,9 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
   const addFeedback = useFeedbackStore((s) => s.add);
 
   const [candidates, setCandidates] = useState<HookCandidate[] | null>(null);
+  const [stampIdx, setStampIdx] = useState<{ idx: number; text: string } | null>(
+    null
+  );
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -61,7 +65,8 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
     }
   };
 
-  const handleAdopt = (c: HookCandidate) => {
+  const handleAdopt = (c: HookCandidate, idx: number) => {
+    setStampIdx({ idx, text: '采' });
     update(episode.id, { hook: c.text });
     // adopt 视为强正反馈；同时把没被采用的其它候选记为 rejected，形成偏好
     addFeedback({
@@ -83,10 +88,12 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
       }
     }
     toast.success(`已将钩子更新为：${c.text.slice(0, 20)}…`);
-    setCandidates(null);
+    // 印章动画跑完再清候选
+    window.setTimeout(() => setCandidates(null), 600);
   };
 
-  const handleFavorite = (c: HookCandidate) => {
+  const handleFavorite = (c: HookCandidate, idx: number) => {
+    setStampIdx({ idx, text: '藏' });
     addLibraryHook({
       text: c.text,
       style: c.style,
@@ -181,8 +188,15 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
           {candidates.map((c, i) => (
             <div
               key={i}
-              className="rounded border border-neutral-800 bg-neutral-900/60 p-2"
+              className="relative rounded border border-neutral-800 bg-neutral-900/60 p-2"
             >
+              <SealStamp
+                show={stampIdx?.idx === i}
+                text={stampIdx?.text ?? '采'}
+                onDone={() => setStampIdx(null)}
+                placement="top-right"
+                size={48}
+              />
               <div className="mb-1 flex items-center gap-2">
                 <span
                   className={`rounded border px-1.5 py-0.5 text-[9px] ${
@@ -208,7 +222,7 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
                   <ThumbsDown size={10} />
                 </button>
                 <button
-                  onClick={() => handleFavorite(c)}
+                  onClick={() => handleFavorite(c, i)}
                   className="rounded p-1 text-neutral-500 hover:bg-neutral-800 hover:text-amber-300"
                   type="button"
                   title="收藏到资产库"
@@ -216,7 +230,7 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
                   <BookmarkPlus size={10} />
                 </button>
                 <button
-                  onClick={() => handleAdopt(c)}
+                  onClick={() => handleAdopt(c, i)}
                   className="rounded border border-emerald-800 bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-200 hover:border-emerald-700"
                   type="button"
                   title="采用此钩子（其它候选自动记为"不喜欢"）"

@@ -171,30 +171,38 @@ const DashboardView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          <StatCard
-            label="角色"
-            done={charactersWithRef.length}
-            total={characters.length}
-            unit="参考图"
-          />
-          <StatCard
-            label="集数钩子"
-            done={episodesWithHook.length}
-            total={episodes.length}
-            unit="已设计"
-          />
-          <StatCard
-            label="关键帧"
-            done={keyframeDone}
-            total={shots.length}
-            unit="已生成"
-          />
-          <StatCard
-            label="发布文案"
-            done={episodesWithPack.length}
-            total={episodes.length}
-            unit="已产出"
-          />
+          <div className="animate-fade-up stagger-1">
+            <StatCard
+              label="角色"
+              done={charactersWithRef.length}
+              total={characters.length}
+              unit="参考图"
+            />
+          </div>
+          <div className="animate-fade-up stagger-2">
+            <StatCard
+              label="集数钩子"
+              done={episodesWithHook.length}
+              total={episodes.length}
+              unit="已设计"
+            />
+          </div>
+          <div className="animate-fade-up stagger-3">
+            <StatCard
+              label="关键帧"
+              done={keyframeDone}
+              total={shots.length}
+              unit="已生成"
+            />
+          </div>
+          <div className="animate-fade-up stagger-4">
+            <StatCard
+              label="发布文案"
+              done={episodesWithPack.length}
+              total={episodes.length}
+              unit="已产出"
+            />
+          </div>
         </div>
       </div>
 
@@ -310,26 +318,34 @@ const DashboardView: React.FC = () => {
 
       {/* 运营资产 */}
       <div className="grid grid-cols-2 gap-3">
-        <MiniCard
-          label="已排期发布"
-          primary={`${episodesWithDate.length}`}
-          sub={`/ ${episodes.length} 集`}
-        />
-        <MiniCard
-          label="发布后录入数据"
-          primary={`${episodesWithMetrics.length}`}
-          sub={`/ ${episodes.length} 集`}
-        />
-        <MiniCard
-          label="金句 / 钩子库"
-          primary={`${hooks.length}`}
-          sub="已收藏"
-        />
-        <MiniCard
-          label="风格模板库"
-          primary={`${styles.length}`}
-          sub="已保存"
-        />
+        <div className="animate-fade-up stagger-5">
+          <MiniCard
+            label="已排期发布"
+            primary={`${episodesWithDate.length}`}
+            sub={`/ ${episodes.length} 集`}
+          />
+        </div>
+        <div className="animate-fade-up stagger-6">
+          <MiniCard
+            label="发布后录入数据"
+            primary={`${episodesWithMetrics.length}`}
+            sub={`/ ${episodes.length} 集`}
+          />
+        </div>
+        <div className="animate-fade-up stagger-7">
+          <MiniCard
+            label="金句 / 钩子库"
+            primary={`${hooks.length}`}
+            sub="已收藏"
+          />
+        </div>
+        <div className="animate-fade-up stagger-8">
+          <MiniCard
+            label="风格模板库"
+            primary={`${styles.length}`}
+            sub="已保存"
+          />
+        </div>
       </div>
 
       <ProductionPacingCard />
@@ -505,11 +521,11 @@ const StatCard: React.FC<{
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   return (
     <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-2.5">
-      <div className="text-[10px] uppercase tracking-wide text-neutral-500">
+      <div className="label-stamp text-[10px] text-neutral-500">
         {label}
       </div>
       <div className="mt-0.5 flex items-baseline gap-1">
-        <span className="text-lg font-semibold text-neutral-100">{done}</span>
+        <span className="num-display text-lg text-neutral-100">{done}</span>
         <span className="text-[10px] text-neutral-500">/ {total} {unit}</span>
       </div>
       <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-neutral-800">
@@ -528,11 +544,11 @@ const MiniCard: React.FC<{
   sub: string;
 }> = ({ label, primary, sub }) => (
   <div className="rounded border border-neutral-800 bg-neutral-900/40 p-2.5">
-    <div className="text-[10px] uppercase tracking-wide text-neutral-500">
+    <div className="label-stamp text-[10px] text-neutral-500">
       {label}
     </div>
     <div className="mt-0.5">
-      <span className="text-xl font-semibold text-neutral-100">{primary}</span>
+      <span className="num-display text-xl text-neutral-100">{primary}</span>
       <span className="ml-1 text-[10px] text-neutral-500">{sub}</span>
     </div>
   </div>

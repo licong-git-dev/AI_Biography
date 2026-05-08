@@ -90,7 +90,7 @@ const LeftPanel: React.FC = () => {
     <>
       <div className="p-4 space-y-5">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-sepia-400/70 mb-1">
+          <div className="label-stamp text-[10px] text-sepia-400/70 mb-1">
             Project
           </div>
           <div className="ip-title text-base text-sepia-100">《李聪传》</div>
@@ -102,7 +102,7 @@ const LeftPanel: React.FC = () => {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-sepia-400/70">
+            <span className="label-stamp text-[10px] text-sepia-400/70">
               角色卡 · {search ? `${filteredCharacters.length}/${characters.length}` : characters.length}
             </span>
             <button

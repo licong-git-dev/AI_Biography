@@ -70,7 +70,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -121,11 +121,44 @@
         outline: 2px solid rgba(217, 190, 132, 0.6);
         outline-offset: 2px;
       }
-      /* IP 标题专用 — 衬线粗体 + 字间距收紧 */
+      /* ----- 字体阶梯 ----- */
+      /* H1：IP 标题（最重，最大），用于 Header / 项目名 */
       .ip-title {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        font-feature-settings: 'palt' 1;
+      }
+      /* H2：季 / 章 标题（次重） */
+      .season-title {
         font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
         font-weight: 700;
         letter-spacing: 0.05em;
+      }
+      /* H3：模块标题（中等粗细） */
+      .section-title {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      /* 印记小标（label）— 全大写跟踪间距 */
+      .label-stamp {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      /* 数字专用 — 衬线 + tabular nums */
+      .num-display {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      /* 正文阅读字号阶（章节正文专用） */
+      .body-prose {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', Georgia, serif;
+        font-weight: 400;
+        line-height: 1.95;
       }
       /* 装饰横线（章节/标题下方） */
       .ornamental-rule {
@@ -195,6 +228,18 @@
       }
       .animate-orn-in {
         animation: orn-fade-in 600ms ease-out 200ms both;
+      }
+      /* 印章盖印动效：旋转 + 缩放 + 透明度（仿书法落款） */
+      @keyframes seal-stamp {
+        0%   { transform: rotate(-12deg) scale(1.6); opacity: 0; }
+        25%  { transform: rotate(-6deg) scale(1.05); opacity: 0.95; }
+        50%  { transform: rotate(-8deg) scale(1.0); opacity: 1; }
+        75%  { transform: rotate(-8deg) scale(1.0); opacity: 0.92; }
+        100% { transform: rotate(-8deg) scale(0.95); opacity: 0; }
+      }
+      .animate-seal-stamp {
+        animation: seal-stamp 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        transform-origin: center;
       }
       /* 古籍纸张纤维纹理（极淡） */
       .classical-page {

@@ -162,7 +162,7 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
         <div className="font-mono text-[11px] tracking-[0.2em] text-sepia-400/70">
           第 {chapter.number} 章 · {chapter.wordCount.toLocaleString()} 字
         </div>
-        <h2 className="ip-title mt-1.5 text-2xl text-sepia-100">
+        <h2 className="season-title mt-1.5 text-2xl text-sepia-100">
           {chapter.title}
         </h2>
         <ChapterHeadingOrnament className="mt-2 text-sepia-600/60" />
@@ -376,7 +376,7 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
           .map((para, i) => (
             <p
               key={i}
-              className={`font-serif text-[15px] leading-[1.95] text-sepia-100/90 ${i === 0 ? 'drop-cap' : ''}`}
+              className={`body-prose text-[15px] text-sepia-100/90 ${i === 0 ? 'drop-cap' : ''}`}
               style={{ textIndent: i === 0 ? '0' : '2em', marginBottom: '1em' }}
             >
               {para.trim()}

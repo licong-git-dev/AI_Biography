@@ -81,7 +81,7 @@ const CenterPanel: React.FC = () => {
       <header className="shrink-0 border-b border-ink-800 bg-gradient-to-b from-ink-900 to-ink-900/95 px-6 pt-5 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="ip-title text-2xl text-sepia-100">{SEASON_NAME}</h1>
+            <h1 className="season-title text-2xl text-sepia-100">{SEASON_NAME}</h1>
             <div className="ornamental-rule mt-2 h-px w-32" />
             <p className="mt-2 text-xs text-sepia-300/70">
               核心情绪 · {SEASON_CORE_EMOTIONS.join(' · ')}
@@ -169,11 +169,11 @@ const StatCard: React.FC<{
 }> = ({ label, value, unit }) => (
   <div className="card-lift relative overflow-hidden rounded-lg border border-ink-800 bg-gradient-to-br from-ink-800/40 to-ink-900/40 px-3 py-2 hover:border-sepia-800/60">
     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sepia-700/30 to-transparent" />
-    <div className="text-[10px] uppercase tracking-[0.15em] text-sepia-400/70">
+    <div className="label-stamp text-[10px] text-sepia-400/70">
       {label}
     </div>
     <div className="mt-0.5 flex items-baseline gap-1">
-      <span className="ip-title text-xl font-medium text-sepia-50">
+      <span className="num-display text-xl text-sepia-50">
         {value}
       </span>
       <span className="text-[11px] text-ink-300">{unit}</span>

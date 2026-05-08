@@ -102,13 +102,14 @@ const EpisodeCalendar: React.FC = () => {
                   </span>
                 </div>
                 <div className="space-y-1">
-                  {eps.map((ep) => {
+                  {eps.map((ep, idx) => {
                     const hasMetrics = (ep.metrics?.length ?? 0) > 0;
+                    const stg = idx <= 8 ? `stagger-${idx + 1}` : '';
                     return (
                       <button
                         key={ep.id}
                         onClick={() => setActive(ep.id)}
-                        className="flex w-full items-center justify-between gap-2 rounded border border-neutral-800/60 bg-neutral-900/50 px-2 py-1.5 text-left hover:border-neutral-700"
+                        className={`animate-fade-up card-lift flex w-full items-center justify-between gap-2 rounded-md border border-ink-800/60 bg-ink-900/50 px-2 py-1.5 text-left transition hover:border-sepia-800/40 ${stg}`}
                         type="button"
                       >
                         <div className="min-w-0 flex-1">
