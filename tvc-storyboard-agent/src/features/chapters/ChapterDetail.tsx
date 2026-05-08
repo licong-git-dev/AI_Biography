@@ -9,8 +9,11 @@ import {
 import type { Episode } from '../../types';
 import {
   splitChapterIntoEpisodes,
+  generateContentMatrix,
   type GeneratedEpisode,
+  type ContentMatrixItem,
 } from './chapterService';
+import type { EpisodeFormat } from '../../types';
 import {
   extractPunchlines,
   type PunchlineCandidate,
@@ -46,6 +49,9 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
 
   const [targetCount, setTargetCount] = useState(3);
   const [proposals, setProposals] = useState<GeneratedEpisode[] | null>(null);
+  const [matrix, setMatrix] = useState<ContentMatrixItem[] | null>(null);
+  const [matrixBusy, setMatrixBusy] = useState(false);
+  const matrixAbortRef = useRef<AbortController | null>(null);
 
   const addLibraryHook = useLibraryStore((s) => s.addHook);
   const [punchlines, setPunchlines] = useState<PunchlineCandidate[] | null>(
@@ -76,6 +82,7 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
     setError(null);
     setGenerating(true);
     setProposals(null);
+    setMatrix(null);
     try {
       const result = await splitChapterIntoEpisodes(chapter, targetCount);
       setProposals(result);
@@ -86,6 +93,69 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleMatrix = async () => {
+    setError(null);
+    setProposals(null);
+    setMatrix(null);
+    setMatrixBusy(true);
+    const controller = new AbortController();
+    matrixAbortRef.current = controller;
+    try {
+      const result = await generateContentMatrix(
+        chapter,
+        targetCount,
+        ['A-主剧情', 'B-爆点切片', 'C-人物支线', 'D-金句旁白'],
+        controller.signal
+      );
+      setMatrix(result);
+      const ok = result.filter((m) => !m.error).length;
+      const fail = result.length - ok;
+      if (fail > 0) toast.warning(`矩阵生成完成：${ok} 成 / ${fail} 败，可单独重试`);
+      else toast.success(`矩阵 4 版同生成完成 · 共 ${result.reduce((n, m) => n + m.episodes.length, 0)} 集候选`);
+    } catch (e) {
+      const h = humanizeError(e);
+      if (e instanceof ApiKeyMissingError) openApiKey();
+      setError(h.aborted ? '已取消' : h.hint ? `${h.title}\n${h.hint}` : h.title);
+    } finally {
+      setMatrixBusy(false);
+      matrixAbortRef.current = null;
+    }
+  };
+
+  const cancelMatrix = () => matrixAbortRef.current?.abort();
+
+  const saveMatrixGroup = (item: ContentMatrixItem) => {
+    if (item.episodes.length === 0) return;
+    let n = nextEpisodeNumber(1);
+    const newEpisodes: Episode[] = item.episodes.map((p) => {
+      const ep: Episode = {
+        id: `ep-s1-${String(n).padStart(2, '0')}-${Math.random().toString(36).slice(2, 6)}`,
+        seasonNumber: 1,
+        episodeNumber: n,
+        title: p.title,
+        sourceChapters: [chapter.number],
+        mainConflict: p.mainConflict,
+        memoryPoints: p.memoryPoints,
+        platformSellingPoint: p.platformSellingPoint,
+        priority: p.priority,
+        format: p.format,
+        targetDuration: p.targetDuration,
+        status: '规划中',
+        hook: p.hook,
+        climax: p.climax,
+        suspense: p.suspense,
+      };
+      n += 1;
+      return ep;
+    });
+    addMany(newEpisodes);
+    toast.success(`已保存 ${item.format} · ${newEpisodes.length} 集`);
+    // 移除该格式，剩余的仍可继续保存
+    setMatrix((prev) =>
+      prev ? prev.filter((m) => m.format !== item.format) : null
+    );
   };
 
   const handleExtractPunchlines = async () => {
@@ -185,7 +255,7 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
               value={targetCount}
               onChange={(e) => setTargetCount(Number(e.target.value))}
               className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs text-neutral-100"
-              disabled={generating}
+              disabled={generating || matrixBusy}
             >
               {[2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
@@ -195,11 +265,31 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
             </select>
             <button
               onClick={handleSplit}
-              disabled={generating}
+              disabled={generating || matrixBusy}
               className="rounded bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
+              title="按 A-主剧情 格式拆 1 套"
             >
               {generating ? '拆集中…（15-30 秒）' : 'AI 拆集'}
+            </button>
+            {matrixBusy && (
+              <button
+                onClick={cancelMatrix}
+                className="rounded border border-red-800 bg-red-950/30 px-2 py-1 text-[11px] text-red-300 hover:border-red-700"
+                type="button"
+              >
+                取消
+              </button>
+            )}
+            <button
+              onClick={handleMatrix}
+              disabled={generating || matrixBusy}
+              className="flex items-center gap-1 rounded border border-sepia-700 bg-sepia-800/40 px-3 py-1 text-xs font-medium text-sepia-100 hover:bg-sepia-700/60 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+              title="并行生成 4 版剧集：主剧情 / 爆点 / 人物 / 金句 — 用于多平台分发与人群覆盖"
+            >
+              {matrixBusy ? <Spinner size={10} /> : null}
+              {matrixBusy ? '矩阵生成中…' : '内容矩阵 4 版'}
             </button>
           </div>
         </div>
@@ -266,6 +356,84 @@ const ChapterDetail: React.FC<Props> = ({ chapterId, onBack }) => {
                   />
                   <Row label="平台卖点" value={p.platformSellingPoint} />
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {matrix && matrix.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-sepia-200">
+                内容矩阵 · {matrix.length} 个格式
+              </span>
+              <button
+                onClick={() => setMatrix(null)}
+                className="rounded border border-neutral-800 px-2 py-1 text-[11px] text-neutral-400 hover:border-neutral-700"
+                type="button"
+              >
+                全部丢弃
+              </button>
+            </div>
+            {matrix.map((item) => (
+              <div
+                key={item.format}
+                className={`rounded-lg border p-3 ${item.error ? 'border-red-900/50 bg-red-950/10' : 'border-sepia-900/40 bg-sepia-950/10'}`}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded border border-sepia-700/50 bg-sepia-900/30 px-2 py-0.5 text-[11px] font-medium text-sepia-100">
+                      {item.format}
+                    </span>
+                    <span className="text-[10px] text-neutral-500">
+                      {item.error ? '失败' : `${item.episodes.length} 集候选`}
+                    </span>
+                  </div>
+                  {!item.error && item.episodes.length > 0 && (
+                    <button
+                      onClick={() => saveMatrixGroup(item)}
+                      className="rounded bg-emerald-700 px-2 py-1 text-[11px] font-medium text-white hover:bg-emerald-600"
+                      type="button"
+                    >
+                      保存这一版（{item.episodes.length}）
+                    </button>
+                  )}
+                </div>
+                {item.error ? (
+                  <div className="text-[11px] text-red-300">⚠️ {item.error}</div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {item.episodes.map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded border border-neutral-800 bg-neutral-900/60 px-2 py-1.5"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-neutral-500">
+                            #{idx + 1}
+                          </span>
+                          <span className="text-[12px] font-medium text-neutral-100">
+                            《{p.title}》
+                          </span>
+                          <span
+                            className={`rounded border px-1 py-0.5 text-[9px] ${PRIORITY_COLOR[p.priority] ?? PRIORITY_COLOR.B}`}
+                          >
+                            {p.priority}
+                          </span>
+                          <span className="ml-auto text-[9px] text-neutral-500">
+                            {p.targetDuration}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-[10px] text-neutral-400">
+                          钩子：{p.hook}
+                        </div>
+                        <div className="text-[10px] text-neutral-500">
+                          {p.platformSellingPoint}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
