@@ -22,7 +22,6 @@ export async function generateSpeech(
       model: MODELS.TTS,
       contents: [{ role: 'user', parts: [{ text }] }],
       config: {
-        // @ts-expect-error - responseModalities / speechConfig 可能未在 SDK 类型里
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {

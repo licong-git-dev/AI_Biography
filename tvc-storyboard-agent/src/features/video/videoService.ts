@@ -30,7 +30,6 @@ export async function generateShotVideo(
   }
 
   recordCall('video');
-  // @ts-expect-error - 运行时调用
   let operation = await ai.models.generateVideos({
     model: MODELS.VIDEO,
     prompt,
@@ -46,7 +45,6 @@ export async function generateShotVideo(
   while (!operation?.done) {
     if (signal?.aborted) throw new Error('用户中止');
     await new Promise((r) => setTimeout(r, 5000));
-    // @ts-expect-error
     operation = await ai.operations.getVideosOperation({ operation });
   }
 

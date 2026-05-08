@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-/**
- * 红色篆刻方印浮层。常见用法：
- *   const [stamping, setStamping] = useState(false);
- *   onClick={() => { setStamping(true); /* 业务 */ }}
- *   <SealStamp text="采" show={stamping} onDone={() => setStamping(false)} />
- *
- * 动画：旋转 -8° 起，scale 1.4 → 1.0，opacity 0 → 1 → 1 → 0.85 → 0
- * 总时长 ~900ms。借鉴书法落款盖印的"重重一按再缓缓抬起"。
- */
+// 红色篆刻方印浮层。盖印动画 ~900ms，借鉴书法落款"重重一按再缓缓抬起"。
 
 interface Props {
   text: string;

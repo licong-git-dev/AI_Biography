@@ -233,7 +233,7 @@ const HookWorkshop: React.FC<Props> = ({ episode }) => {
                   onClick={() => handleAdopt(c, i)}
                   className="rounded border border-emerald-800 bg-emerald-900/30 px-2 py-0.5 text-[10px] font-medium text-emerald-200 hover:border-emerald-700"
                   type="button"
-                  title="采用此钩子（其它候选自动记为"不喜欢"）"
+                  title="采用此钩子（其它候选自动记为不喜欢）"
                 >
                   采用
                 </button>

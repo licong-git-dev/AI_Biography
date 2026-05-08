@@ -1,5 +1,5 @@
 import type { Character } from '../../types';
-import type { SavedHook, SavedStyleTemplate } from '../../stores/libraryStore';
+import type { SavedHook, SavedStyle } from '../../stores/libraryStore';
 
 export const IP_PACKAGE_SCHEMA_VERSION = 1;
 
@@ -18,14 +18,14 @@ export interface IpPackage {
   sourceAppVersion?: string;
   characters: Character[];
   libraryHooks: SavedHook[];
-  libraryStyles: SavedStyleTemplate[];
+  libraryStyles: SavedStyle[];
 }
 
 export function buildIpPackage(params: {
   name: string;
   characters: Character[];
   libraryHooks: SavedHook[];
-  libraryStyles: SavedStyleTemplate[];
+  libraryStyles: SavedStyle[];
   stripReferenceImages?: boolean; // 导出时去掉 base64 减小体积
 }): IpPackage {
   const { name, characters, libraryHooks, libraryStyles, stripReferenceImages } =
@@ -92,7 +92,7 @@ export function mergeIpPackage(params: {
     hook: Omit<SavedHook, 'id' | 'savedAt'>
   ) => void;
   addStyle: (
-    style: Omit<SavedStyleTemplate, 'id' | 'savedAt'>
+    style: Omit<SavedStyle, 'id' | 'savedAt'>
   ) => void;
 }): MergeResult {
   const {

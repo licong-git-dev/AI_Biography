@@ -369,7 +369,7 @@ const FeedbackInsights: React.FC = () => {
     for (const e of entries) {
       byVerdict[e.verdict] = (byVerdict[e.verdict] ?? 0) + 1;
       if (e.createdAt >= oneWeekAgo) recentWeek++;
-      const style = e.sample?.style;
+      const style = e.sample?.split('：')[0];
       if (style && (e.verdict === 'up' || e.verdict === 'adopted')) {
         styleTally[style] = styleTally[style] ?? { up: 0, down: 0 };
         styleTally[style]!.up++;
