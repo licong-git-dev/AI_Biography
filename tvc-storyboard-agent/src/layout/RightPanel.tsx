@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Film, Volume2 } from 'lucide-react';
+import {
+  Image as ImageIcon,
+  Film,
+  Volume2,
+  Lightbulb,
+  Clapperboard,
+  Package,
+  Send,
+} from 'lucide-react';
 import {
   useCharacterStore,
   useEpisodeStore,
   useShotStore,
+  useUIStore,
 } from '../stores';
+import { toast } from '../stores/toastStore';
 import CharacterReferencePanel from '../features/characters/CharacterReferencePanel';
 import CharacterEditModal from '../features/characters/CharacterEditModal';
 import ChatPanel from '../features/chat/ChatPanel';
@@ -28,20 +38,80 @@ const RightPanel: React.FC = () => {
   const activeEpisodeId = useEpisodeStore((s) => s.activeId);
   const getEpisode = useEpisodeStore((s) => s.getById);
   const updateEpisode = useEpisodeStore((s) => s.update);
+  const setActiveEpisode = useEpisodeStore((s) => s.setActive);
+  const allEpisodes = useEpisodeStore((s) => s.episodes);
   const activeEpisode = activeEpisodeId ? getEpisode(activeEpisodeId) : null;
 
   const byEpisode = useShotStore((s) => s.byEpisode);
   const episodeShots = activeEpisodeId ? byEpisode(activeEpisodeId) : [];
+
+  const centerTab = useUIStore((s) => s.centerTab);
+  const setCenterTab = useUIStore((s) => s.setCenterTab);
 
   const [editingCharacterId, setEditingCharacterId] = useState<string | null>(
     null
   );
   const [tab, setTab] = useState<RightTab>('context');
 
+  const goPlan = () => {
+    setCenterTab('chapters');
+    setTab('context');
+  };
+  const goShots = () => {
+    setCenterTab('shots');
+    setTab('context');
+    if (!activeEpisodeId) {
+      toast.info('请先在「集数」选中一集，再生成镜头资产');
+    }
+  };
+  const goExport = () => {
+    setCenterTab('episodes');
+    setTab('context');
+    toast.info('↑ 顶部「导出全季 zip」可批量打包成片');
+  };
+  const goPublish = () => {
+    setCenterTab('episodes');
+    setTab('context');
+    if (!activeEpisodeId && allEpisodes.length > 0) {
+      setActiveEpisode(allEpisodes[0]!.id);
+      toast.info(`已选中 EP${String(allEpisodes[0]!.episodeNumber).padStart(2, '0')}，下方查看发布面板`);
+    } else if (!activeEpisode) {
+      toast.info('还没有集数，先做「生成策划」');
+    }
+  };
+
   return (
     <>
       <div className="flex h-full flex-col">
-        {/* 顶部 tab 切换 */}
+        {/* 4 主操作按钮栏 — 始终可见的主流程入口 */}
+        <div className="shrink-0 grid grid-cols-4 gap-1 border-b border-ink-800 bg-gradient-to-b from-ink-900/80 to-ink-900/40 p-2">
+          <ActionButton
+            icon={<Lightbulb size={14} />}
+            label="生成策划"
+            active={centerTab === 'chapters'}
+            onClick={goPlan}
+          />
+          <ActionButton
+            icon={<Clapperboard size={14} />}
+            label="生成镜头"
+            active={centerTab === 'shots'}
+            onClick={goShots}
+          />
+          <ActionButton
+            icon={<Package size={14} />}
+            label="导出版本"
+            active={false}
+            onClick={goExport}
+          />
+          <ActionButton
+            icon={<Send size={14} />}
+            label="发布准备"
+            active={false}
+            onClick={goPublish}
+          />
+        </div>
+
+        {/* 详情 / 询问 AI tab 切换 */}
         <div className="shrink-0 flex items-center gap-1 border-b border-neutral-800 px-3 py-1.5">
           <TabButton
             active={tab === 'context'}
@@ -234,6 +304,27 @@ const TabButton: React.FC<{
     {active && (
       <span className="absolute inset-x-2.5 -bottom-[7px] h-0.5 bg-neutral-100" />
     )}
+  </button>
+);
+
+const ActionButton: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}> = ({ icon, label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    type="button"
+    title={label}
+    className={`card-lift flex flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1.5 text-[10px] transition ${
+      active
+        ? 'border-sepia-700/70 bg-sepia-900/30 text-sepia-100'
+        : 'border-ink-800 bg-ink-900/40 text-ink-200 hover:border-sepia-800/60 hover:bg-sepia-950/20 hover:text-sepia-200'
+    }`}
+  >
+    {icon}
+    <span className="leading-tight">{label}</span>
   </button>
 );
 
