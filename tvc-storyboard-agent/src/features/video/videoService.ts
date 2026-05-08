@@ -1,6 +1,10 @@
 import type { Shot } from '../../types';
 import { getGeminiClient, MODELS } from '../../services/geminiClient';
 import { recordCall } from '../../stores/statsStore';
+import {
+  useStyleBaselineStore,
+  buildStyleBaselineContext,
+} from '../../stores/styleBaselineStore';
 
 /**
  * 用 Veo 3 做图生视频。参数名和 API 形状可能随 @google/genai 版本变化，
@@ -75,8 +79,13 @@ export async function generateShotVideo(
 }
 
 function buildVideoPrompt(shot: Shot): string {
-  return `《李聪传》短剧镜头动起来。
+  const styleCtx = buildStyleBaselineContext(
+    useStyleBaselineStore.getState().baseline
+  );
+  const styleBlock = styleCtx ? `\n${styleCtx}\n` : '';
 
+  return `《李聪传》短剧镜头动起来。
+${styleBlock}
 镜头描述：${shot.description}
 运镜：${shot.cameraMove ?? '固定'}
 景别：${shot.shotSize}

@@ -17,3 +17,10 @@ export type {
   FeedbackKind,
   FeedbackVerdict,
 } from './feedbackStore';
+export {
+  useStyleBaselineStore,
+  buildStyleBaselineContext,
+  isStyleBaselineConfigured,
+  EMPTY_STYLE_BASELINE,
+} from './styleBaselineStore';
+export type { StyleBaseline } from './styleBaselineStore';

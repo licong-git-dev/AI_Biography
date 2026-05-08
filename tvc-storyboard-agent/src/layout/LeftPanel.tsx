@@ -3,6 +3,7 @@ import { Plus, Search, Trash2, X as XIcon } from 'lucide-react';
 import { useCharacterStore, useChapterStore, useShotStore } from '../stores';
 import type { Character, CharacterGroup } from '../types';
 import CharacterEditModal from '../features/characters/CharacterEditModal';
+import StyleBaselineSection from '../features/style/StyleBaselineSection';
 
 const GROUP_ORDER: CharacterGroup[] = ['主角', '家人', '伴侣', '朋友'];
 
@@ -99,6 +100,8 @@ const LeftPanel: React.FC = () => {
             AI 短剧生产工作台 · v0.1
           </div>
         </div>
+
+        <StyleBaselineSection />
 
         <div>
           <div className="mb-2 flex items-center justify-between">

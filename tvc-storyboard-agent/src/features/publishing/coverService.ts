@@ -6,6 +6,10 @@ import {
 } from '../../services/geminiClient';
 import { raceAbort } from '../../services/abort';
 import { recordCall } from '../../stores/statsStore';
+import {
+  useStyleBaselineStore,
+  buildStyleBaselineContext,
+} from '../../stores/styleBaselineStore';
 
 export type CoverAspect = '9:16' | '3:4' | '1:1';
 
@@ -30,8 +34,13 @@ function buildPrompt(params: {
     .map((c) => `${c.name}（${c.ageStage}）：${c.appearance.join('；')}`)
     .join('\n');
 
-  return `为《李聪传》AI 短剧生成封面图。
+  const styleCtx = buildStyleBaselineContext(
+    useStyleBaselineStore.getState().baseline
+  );
+  const styleBlock = styleCtx ? `\n${styleCtx}\n` : '';
 
+  return `为《李聪传》AI 短剧生成封面图。
+${styleBlock}
 【集信息】
 EP${String(episode.episodeNumber).padStart(2, '0')}《${episode.title}》
 主冲突：${episode.mainConflict}

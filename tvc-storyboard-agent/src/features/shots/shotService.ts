@@ -6,6 +6,10 @@ import {
 } from '../../services/geminiClient';
 import { raceAbort } from '../../services/abort';
 import { recordCall } from '../../stores/statsStore';
+import {
+  useStyleBaselineStore,
+  buildStyleBaselineContext,
+} from '../../stores/styleBaselineStore';
 
 function buildShotPrompt(shot: Shot, characters: Character[]): string {
   const baselines = characters
@@ -19,7 +23,13 @@ function buildShotPrompt(shot: Shot, characters: Character[]): string {
     )
     .join('\n');
 
+  const styleCtx = buildStyleBaselineContext(
+    useStyleBaselineStore.getState().baseline
+  );
+  const styleBlock = styleCtx ? `\n${styleCtx}\n` : '';
+
   return `为《李聪传》AI 短剧生成单个镜头的关键帧。
+${styleBlock}
 
 【镜头信息】
 - 编号：${shot.number}

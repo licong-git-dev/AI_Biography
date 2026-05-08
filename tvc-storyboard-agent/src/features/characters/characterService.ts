@@ -2,15 +2,24 @@ import type { Character } from '../../types';
 import { extractImageDataUrl, getGeminiClient, MODELS } from '../../services/geminiClient';
 import { raceAbort } from '../../services/abort';
 import { recordCall } from '../../stores/statsStore';
+import {
+  useStyleBaselineStore,
+  buildStyleBaselineContext,
+} from '../../stores/styleBaselineStore';
 
 function buildReferencePrompt(character: Character): string {
   const appearanceBlock = character.appearance.map((a) => `- ${a}`).join('\n');
   const outfitsBlock = character.outfits.map((o) => `- ${o}`).join('\n');
   const vibeLine = character.vibe.join('、');
 
+  const styleCtx = buildStyleBaselineContext(
+    useStyleBaselineStore.getState().baseline
+  );
+  const styleBlock = styleCtx ? `${styleCtx}\n\n` : '';
+
   return `为《李聪传》AI 短剧生成角色一致性参考图（Character Reference Sheet）。
 
-角色名称：${character.name}（${character.ageStage} · ${character.ageRange}）
+${styleBlock}角色名称：${character.name}（${character.ageStage} · ${character.ageRange}）
 
 外观基线（必须严格遵循，不得偷懒简写）：
 ${appearanceBlock}
