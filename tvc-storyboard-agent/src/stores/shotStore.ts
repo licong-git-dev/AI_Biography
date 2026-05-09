@@ -15,7 +15,7 @@ interface ShotStore {
   removeByEpisode: (episodeId: string) => void;
   moveShot: (id: string, direction: 'up' | 'down') => void;
   setGenStatus: (id: string, status: ShotGenStatus) => void;
-  setKeyframe: (id: string, url: string) => void;
+  setKeyframe: (id: string, url: string, aspectRatio?: NonNullable<Shot['aspectRatio']>) => void;
   setPrompt: (id: string, prompt: string) => void;
   setVideoGenStatus: (id: string, status: VideoGenStatus) => void;
   setVideo: (id: string, url: string, prompt: string) => void;
@@ -111,11 +111,17 @@ export const useShotStore = create<ShotStore>()(
           ),
         })),
 
-      setKeyframe: (id, url) =>
+      setKeyframe: (id, url, aspectRatio) =>
         set((state) => ({
           shots: state.shots.map((s) =>
             s.id === id
-              ? { ...s, keyframeUrl: url, keyframeStale: false, genStatus: '已生成' }
+              ? {
+                  ...s,
+                  keyframeUrl: url,
+                  keyframeStale: false,
+                  genStatus: '已生成',
+                  ...(aspectRatio ? { aspectRatio } : {}),
+                }
               : s
           ),
         })),

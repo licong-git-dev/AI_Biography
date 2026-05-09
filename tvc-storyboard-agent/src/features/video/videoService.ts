@@ -39,7 +39,7 @@ export async function generateShotVideo(
     prompt,
     image: { imageBytes, mimeType },
     config: {
-      aspectRatio: '9:16',
+      aspectRatio: shot.aspectRatio ?? '9:16',
       durationSeconds: Math.min(Math.max(shot.duration, 3), 8),
       numberOfVideos: 1,
     },

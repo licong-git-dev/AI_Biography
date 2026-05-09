@@ -87,12 +87,13 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
     const controller = new AbortController();
     imgAbortRef.current = controller;
     try {
-      const { url, prompt } = await generateShotKeyframe(
+      const { url, prompt, aspectRatio } = await generateShotKeyframe(
         shot,
         characters,
-        controller.signal
+        controller.signal,
+        shot.aspectRatio ?? '9:16'
       );
-      setKeyframe(shot.id, url);
+      setKeyframe(shot.id, url, aspectRatio);
       setPrompt(shot.id, prompt);
     } catch (e) {
       if (isAbortError(e)) {
@@ -299,41 +300,71 @@ const ShotKeyframeModal: React.FC<Props> = ({ shotId, onClose }) => {
             </div>
           )}
 
-          <div className="mt-3 flex justify-end gap-2">
-            {shot.keyframeUrl && shot.prompt && !generatingImage && (
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-neutral-500">画幅</span>
+              {(['9:16', '16:9', '1:1'] as const).map((r) => {
+                const current = shot.aspectRatio ?? '9:16';
+                return (
+                  <button
+                    key={r}
+                    onClick={() => updateShot(shot.id, { aspectRatio: r })}
+                    disabled={generatingImage}
+                    type="button"
+                    className={`rounded border px-1.5 py-0.5 text-[10px] transition ${
+                      current === r
+                        ? 'border-sepia-700 bg-sepia-900/40 text-sepia-100'
+                        : 'border-neutral-800 bg-neutral-900/40 text-neutral-400 hover:border-sepia-800/60 hover:text-sepia-300'
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                    title={
+                      r === '9:16'
+                        ? '抖音/视频号/小红书 主流竖屏'
+                        : r === '16:9'
+                          ? 'B站/油管 横屏'
+                          : '小红书 / 朋友圈 方图'
+                    }
+                  >
+                    {r}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2">
+              {shot.keyframeUrl && shot.prompt && !generatingImage && (
+                <button
+                  onClick={() =>
+                    setStyleNameInput(`镜 ${shot.number} · ${shot.shotSize}`)
+                  }
+                  className="flex items-center gap-1 rounded border border-amber-800 bg-amber-900/20 px-2 py-1.5 text-[11px] text-amber-300 hover:border-amber-700"
+                  type="button"
+                  title="把当前关键帧的 prompt + 缩略图存到资产库，未来可复用"
+                >
+                  <BookmarkPlus size={11} /> 保存风格
+                </button>
+              )}
+              {generatingImage && (
+                <button
+                  onClick={cancelImg}
+                  className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:border-red-700"
+                  type="button"
+                >
+                  取消
+                </button>
+              )}
               <button
-                onClick={() =>
-                  setStyleNameInput(`镜 ${shot.number} · ${shot.shotSize}`)
-                }
-                className="flex items-center gap-1 rounded border border-amber-800 bg-amber-900/20 px-2 py-1.5 text-[11px] text-amber-300 hover:border-amber-700"
-                type="button"
-                title="把当前关键帧的 prompt + 缩略图存到资产库，未来可复用"
-              >
-                <BookmarkPlus size={11} /> 保存风格
-              </button>
-            )}
-            {generatingImage && (
-              <button
-                onClick={cancelImg}
-                className="rounded border border-red-800 bg-red-950/30 px-2.5 py-1.5 text-xs text-red-300 hover:border-red-700"
+                onClick={handleGenerateImage}
+                disabled={anyRunning}
+                className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
                 type="button"
               >
-                取消
+                {generatingImage && <Spinner size={12} />}
+                {generatingImage
+                  ? '生成中…'
+                  : shot.keyframeUrl
+                    ? '重新生成关键帧'
+                    : '生成关键帧'}
               </button>
-            )}
-            <button
-              onClick={handleGenerateImage}
-              disabled={anyRunning}
-              className="flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
-              type="button"
-            >
-              {generatingImage && <Spinner size={12} />}
-              {generatingImage
-                ? '生成中…'
-                : shot.keyframeUrl
-                  ? '重新生成关键帧'
-                  : '生成关键帧'}
-            </button>
+            </div>
           </div>
         </Section>
 

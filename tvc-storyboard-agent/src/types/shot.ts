@@ -52,6 +52,8 @@ export interface Shot {
   prompt?: string;
   keyframeUrl?: string;
   keyframeStale?: boolean;
+  /** 关键帧 / 视频画幅；缺省按 9:16 竖屏 */
+  aspectRatio?: '9:16' | '16:9' | '1:1';
   genStatus: ShotGenStatus;
 
   videoUrl?: string;

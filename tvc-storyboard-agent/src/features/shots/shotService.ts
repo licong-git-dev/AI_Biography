@@ -77,8 +77,9 @@ function extractInlineParts(refImageUrls: string[]): InlinePart[] {
 export async function generateShotKeyframe(
   shot: Shot,
   characters: Character[],
-  signal?: AbortSignal
-): Promise<{ url: string; prompt: string }> {
+  signal?: AbortSignal,
+  aspectRatio: NonNullable<Shot['aspectRatio']> = shot.aspectRatio ?? '9:16'
+): Promise<{ url: string; prompt: string; aspectRatio: NonNullable<Shot['aspectRatio']> }> {
   const ai = getGeminiClient();
   // 用户手动编辑过的 prompt 优先；否则根据当前字段自动拼
   const prompt = shot.prompt && shot.prompt.trim()
@@ -102,7 +103,7 @@ export async function generateShotKeyframe(
       contents: [{ role: 'user', parts }],
       config: {
         imageConfig: {
-          aspectRatio: '9:16',
+          aspectRatio,
           imageSize: '1K',
         },
       },
@@ -114,7 +115,7 @@ export async function generateShotKeyframe(
   if (!url) {
     throw new Error('Gemini 返回内容里没有图像数据，可能被安全策略拦截或模型暂不可用。');
   }
-  return { url, prompt };
+  return { url, prompt, aspectRatio };
 }
 
 export class BatchAbortError extends Error {
