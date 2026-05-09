@@ -80,6 +80,55 @@ const PATTERNS: Array<{
     title: '浏览器存储已满',
     hint: '点 Header 存储指示器一键清理 base64 图，或导出 JSON 备份后再清理',
   },
+  {
+    match: (m) =>
+      /unavailable.{0,10}(in|country|location|region)|user.{0,5}location|geo.{0,5}restrict/i.test(
+        m
+      ),
+    title: 'Gemini 在当前地区不可用',
+    hint: 'Gemini API 在中国大陆等地区受限。需要科学上网，或换一个有访问权限的网络环境再试',
+  },
+  {
+    match: (m) =>
+      /veo/i.test(m) &&
+      /(not.{0,10}(allowed|enabled|whitelist|eligible)|access.{0,5}denied|preview.{0,10}(not|unavailable))/i.test(
+        m
+      ),
+    title: 'Veo 视频生成未开通',
+    hint: 'Veo 3 当前为受限预览模型，需要付费 Tier 或申请加入预览。点 Header ⚙ 模型设置切到稳定的 latest ID 试试',
+  },
+  {
+    match: (m) =>
+      /voice.{0,5}(not.{0,5}(found|available)|invalid)|prebuiltVoiceConfig|unsupported.{0,5}voice/i.test(
+        m
+      ),
+    title: 'TTS 声线名不可用',
+    hint: '当前账号或区域不支持该 voiceName。在 ShotKeyframeModal 配音区换一个声线（Kore / Puck / Charon 等）再试',
+  },
+  {
+    match: (m) =>
+      /audio.{0,5}(too.{0,5}(long|large|big)|exceeds|max.{0,5}duration)|file.{0,5}(too.{0,5}large|size.{0,5}exceeds)/i.test(
+        m
+      ),
+    title: '音频过长 / 过大',
+    hint: '转写 / 处理的音频超出 Gemini 上限。把镜头拆短一点，或先在外部剪辑工具切片再上传',
+  },
+  {
+    match: (m) =>
+      /no.{0,10}(image|video|audio).{0,10}(returned|generated|data)|empty.{0,10}response|response.{0,10}is.{0,10}empty/i.test(
+        m
+      ),
+    title: '模型返回为空',
+    hint: '可能被安全策略拦截，或当前模型对该 prompt 不出图。改一下描述措辞，或开启深度思考（Header Brain）让模型更慎重',
+  },
+  {
+    match: (m) =>
+      /(operation|long.{0,5}running).{0,10}(timeout|expired|exceeded)|polling.{0,5}timeout/i.test(
+        m
+      ),
+    title: '长时任务超时',
+    hint: 'Veo 视频生成可能需 1-5 分钟。这次没等到结果，重试一次；如反复超时，可能 Gemini 服务端排队',
+  },
 ];
 
 export function humanizeError(e: unknown): HumanError {
@@ -121,6 +170,16 @@ export function humanizeError(e: unknown): HumanError {
         raw,
       };
     }
+  }
+
+  // 中文消息（多为 service 层手写的友好错误）直接做 title，不再当作生硬的 hint
+  if (/[一-龥]/.test(msg)) {
+    return {
+      title: msg.length > 60 ? `${msg.slice(0, 60)}…` : msg,
+      hint: '',
+      aborted: false,
+      raw,
+    };
   }
 
   return {
