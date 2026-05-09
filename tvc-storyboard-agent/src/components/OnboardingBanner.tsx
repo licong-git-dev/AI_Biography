@@ -1,10 +1,12 @@
 import React from 'react';
-import { Check, Circle, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import {
   useCharacterStore,
   useEpisodeStore,
   useShotStore,
   useUIStore,
+  useStyleBaselineStore,
+  isStyleBaselineConfigured,
 } from '../stores';
 
 const OnboardingBanner: React.FC = () => {
@@ -14,6 +16,7 @@ const OnboardingBanner: React.FC = () => {
   const openApiKey = useUIStore((s) => s.openApiKeyModal);
   const setCenterTab = useUIStore((s) => s.setCenterTab);
 
+  const baseline = useStyleBaselineStore((s) => s.baseline);
   const charactersWithRef = useCharacterStore(
     (s) => s.characters.filter((c) => c.referenceImageUrl).length
   );
@@ -27,16 +30,17 @@ const OnboardingBanner: React.FC = () => {
   if (dismissed) return null;
 
   const step1Done = apiKeyPresent;
-  const step2Done = charactersWithRef > 0;
-  const step3Done = userAddedEpisodes > 0 || anyKeyframe;
+  const step2Done = isStyleBaselineConfigured(baseline);
+  const step3Done = charactersWithRef > 0;
+  const step4Done = userAddedEpisodes > 0;
+  const step5Done = anyKeyframe;
 
-  // 三步都完成后自动隐藏
-  if (step1Done && step2Done && step3Done) return null;
+  if (step1Done && step2Done && step3Done && step4Done && step5Done) return null;
 
   return (
     <div className="shrink-0 border-b border-sepia-900/40 bg-gradient-to-r from-sepia-950/30 via-sepia-950/20 to-sepia-950/30 px-4 py-2">
       <div className="flex items-center gap-4">
-        <div className="flex-1 flex items-center gap-4 overflow-x-auto">
+        <div className="flex-1 flex items-center gap-3 overflow-x-auto">
           <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.15em] text-sepia-300">
             快速上手
           </span>
@@ -51,16 +55,31 @@ const OnboardingBanner: React.FC = () => {
           <Step
             n={2}
             done={step2Done}
-            label="生成角色参考图"
-            hint="左栏点角色 → 右栏「生成参考图」"
+            label="设置全片风格基线"
+            hint="左栏「风格基线」卡 → 配置 / 套预设"
           />
           <span className="text-neutral-700">›</span>
           <Step
             n={3}
             done={step3Done}
-            label="AI 拆集 + 生成镜头"
-            hint="中栏「章节」tab 选一章"
+            label="生成角色参考图"
+            hint="左栏点角色 → 右栏「生成参考图」"
+          />
+          <span className="text-neutral-700">›</span>
+          <Step
+            n={4}
+            done={step4Done}
+            label="AI 拆集为短剧集"
+            hint="中栏「章节」tab 选一章 → 「AI 拆集」"
             onClick={() => setCenterTab('chapters')}
+          />
+          <span className="text-neutral-700">›</span>
+          <Step
+            n={5}
+            done={step5Done}
+            label="生成第一个关键帧"
+            hint="中栏「镜头」tab → 任一镜头点开 → 生成"
+            onClick={() => setCenterTab('shots')}
           />
         </div>
         <button
